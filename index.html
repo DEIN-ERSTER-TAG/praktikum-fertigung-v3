@@ -393,7 +393,15 @@
   .fertigung-karte small { display: block; font-size: .84rem; color: var(--tinte-weich); margin-top: 8px; }
   .ladebalken { margin-top: 14px; height: 10px; border-radius: 999px; background: var(--flaeche); overflow: hidden; }
   .ladebalken-fuellung { display: block; height: 100%; width: 0%; background: var(--orange); border-radius: 999px; transition: width 2.4s linear; }
+  /* Schnellere Transition fuer die schrittweise simulierte Messung/Fertigung
+     (viele kleine Sprünge statt einem einzigen) - die 2.4s-Variante oben
+     würde den Schritten ständig hinterherhinken. */
+  .ladebalken-fuellung.takt { transition: width .15s linear; }
   .lade-label { margin-top: 8px; text-align: center; font-size: .86rem; color: var(--tinte-weich); }
+  .cad-slider { margin-top: 14px; }
+  .cad-slider label { display: block; font-size: .84rem; color: var(--tinte-weich); margin-bottom: 8px; }
+  .cad-slider label b { color: var(--tinte); }
+  .cad-slider input[type="range"] { width: 100%; margin-bottom: 12px; accent-color: var(--orange); }
 
   /* Reihenfolge (letzter Schritt): ersetzt den frueheren Uhrzeit-Kalender -
      die vier Schlussschritte haengen rein logisch zusammen, nicht an festen
@@ -598,14 +606,16 @@
       <div class="app-kopf">Digitaler Zwilling <span class="logoklein"></span></div>
       <div class="auftragsleiste" id="leiste-zwilling" hidden></div>
       <div class="inhalt">
-        <p class="frage">Welches Bauteil ist kaputt?</p>
-        <div class="zwilling-live" aria-hidden="true">
-          <span>Zykluszeit <b id="zwLiveA">2.4 s</b></span>
-          <span>Systemdruck <b id="zwLiveB">4.1 bar</b></span>
-          <span>Temperatur <b id="zwLiveC">21 °C</b></span>
+        <div id="zwillingSzene">
+          <p class="frage">Welches Bauteil ist kaputt?</p>
+          <div class="zwilling-live" aria-hidden="true">
+            <span>Zykluszeit <b id="zwLiveA">2.4 s</b></span>
+            <span>Systemdruck <b id="zwLiveB">4.1 bar</b></span>
+            <span>Temperatur <b id="zwLiveC">21 °C</b></span>
+          </div>
+          <div class="zwilling-wrap" id="zwillingszene-wrap"></div>
+          <p class="zwillingablesung" id="zwillingablesung">Tippe eine markierte Stelle an der Anlage an.</p>
         </div>
-        <div class="zwilling-wrap" id="zwillingszene-wrap"></div>
-        <p class="zwillingablesung" id="zwillingablesung">Tippe eine markierte Stelle an der Anlage an.</p>
         <div id="messpunkte" hidden></div>
       </div>
     </div>
@@ -869,10 +879,14 @@ const AUFGABENFOLIEN = {
 };
 let aufgabenfolieWeiter = null;
 
-function zeigeAufgabenfolie(schrittNr, weiter) {
+/* text ist optional: normalerweise kommt der Text aus AUFGABENFOLIEN[schrittNr]
+   (Uebergang zwischen den 5 Hauptschritten), aber die Anforderungs-Aufnahme
+   braucht innerhalb von Schritt 3 eine eigene Zwischenfolie mit eigenem Text,
+   ohne die Schrittzaehlung zu veraendern. Siehe TODO.md. */
+function zeigeAufgabenfolie(schrittNr, weiter, text) {
   aufgabenfolieWeiter = weiter;
   $("#afSchritt").textContent = `Schritt ${schrittNr} von ${STUFEN}`;
-  $("#afText").textContent = AUFGABENFOLIEN[schrittNr] || "";
+  $("#afText").textContent = text || AUFGABENFOLIEN[schrittNr] || "";
   $("#aufgabenfolie").hidden = false;
 }
 
@@ -1226,38 +1240,67 @@ function zwillingLoesen() {
 
 /* Technische Anforderungen: nach dem Fund am Zwilling noch nicht fertig -
    erst wenn alle drei Messwerte aufgenommen sind, geht's zu Lena weiter.
+   Eigener Abschnitt statt auf dieselbe Flaeche wie die Zwilling-Szene
+   gequetscht: eigene Aufgabenfolie kuendigt ihn an, dann ersetzt er die
+   Szene komplett (#zwillingSzene wird ausgeblendet). Immer nur eine Messung
+   auf einmal statt aller drei gleichzeitig, mit simuliertem Fortschritt beim
+   Antippen - macht "wird gerade gemessen" sichtbar statt einem stummen Klick.
    Dieselbe Liste wird spaeter im CAD-Schritt wiederverwendet (siehe unten),
-   damit die eigene Analyse sich sichtbar im Modell niederschlaegt statt
-   zwei unabhaengige Haken zu sein. Siehe TODO.md. */
+   damit die eigene Analyse sich sichtbar im Modell niederschlaegt. Siehe
+   TODO.md. */
 const ANFORDERUNGEN = [
-  {id: "durchmesser", label: "Durchmesser", wert: "18 mm"},
-  {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm"},
-  {id: "werkstoff", label: "Werkstoff", wert: "Stahl C45"}
+  {id: "durchmesser", label: "Durchmesser", wert: "18 mm", aktion: "Der Durchmesser wird ermittelt",
+   ziel: 18, bereich: [10, 26], einheit: "mm"},
+  {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
+   ziel: 6, bereich: [2, 12], einheit: "mm"},
+  {id: "werkstoff", label: "Werkstoff", wert: "Stahl C45", aktion: "Der Werkstoff wird geprüft"}
 ];
 const anforderungenErfasst = [];
+let messungTimer = null;
 
 function anforderungenZeichnen() {
   const box = $("#messpunkte");
-  const offen = ANFORDERUNGEN.filter(a => !anforderungenErfasst.includes(a));
-  const voll = offen.length === 0;
+  const naechste = ANFORDERUNGEN[anforderungenErfasst.length];
   box.innerHTML = `
-    <p class="frage" style="margin-top:14px">Nimm die technischen Anforderungen auf:</p>
-    ${voll ? "" : `<div class="pillen">
-      ${offen.map(a => `<button class="pille" type="button" data-id="${a.id}">${a.label} messen</button>`).join("")}
-    </div>`}
+    <p class="frage">Nimm die technischen Anforderungen auf</p>
+    ${naechste ? `<div class="fertigung-karte">
+      <button class="orderknopf" type="button" id="messungBtn">${naechste.label} messen</button>
+    </div>` : ""}
     <div class="packliste">
-      <div class="zaehler ${voll ? "voll" : ""}">Anforderungen: ${anforderungenErfasst.length} von ${ANFORDERUNGEN.length}</div>
+      <div class="zaehler ${naechste ? "" : "voll"}">Anforderungen: ${anforderungenErfasst.length} von ${ANFORDERUNGEN.length}</div>
       ${anforderungenErfasst.length
         ? `<ul>${anforderungenErfasst.map(a => `<li>${a.label}: ${a.wert}</li>`).join("")}</ul>`
         : `<p class="leer">Noch nichts erfasst.</p>`}
     </div>`;
-  box.querySelectorAll(".pille").forEach(btn => {
-    btn.addEventListener("click", () => {
-      anforderungenErfasst.push(ANFORDERUNGEN.find(a => a.id === btn.dataset.id));
-      anforderungenZeichnen();
-      if (anforderungenErfasst.length === ANFORDERUNGEN.length) setTimeout(zwillingLoesen, 500);
-    });
-  });
+  const btn = $("#messungBtn");
+  if (btn) btn.addEventListener("click", () => messungSimulieren(naechste));
+}
+
+/* Tickt in kleinen, zufaelligen Schritten statt in einem einzigen Sprung -
+   wirkt dadurch wie eine echte laufende Messung statt einer Ladeanimation
+   mit fixer Dauer. */
+function messungSimulieren(a) {
+  $("#messpunkte").innerHTML = `
+    <p class="frage">Nimm die technischen Anforderungen auf</p>
+    <div class="fertigung-karte">
+      <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
+      <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>
+    </div>`;
+  let prozent = 0;
+  clearInterval(messungTimer);
+  messungTimer = setInterval(() => {
+    prozent = Math.min(100, prozent + 7 + Math.random() * 11);
+    $("#messungFuellung").style.width = prozent + "%";
+    $("#messungProzent").textContent = Math.round(prozent) + " %";
+    if (prozent >= 100) {
+      clearInterval(messungTimer);
+      anforderungenErfasst.push(a);
+      setTimeout(() => {
+        anforderungenZeichnen();
+        if (anforderungenErfasst.length === ANFORDERUNGEN.length) setTimeout(zwillingLoesen, 500);
+      }, 500);
+    }
+  }, 160);
 }
 
 /* Ausgelagert, damit Klick UND Tastatur (Enter/Leertaste) dieselbe Stelle
@@ -1267,14 +1310,19 @@ function zwillingKlick(k) {
   if (!k || k.classList.contains("geprueft") || schritt() !== 3) return;
   const z = ZWILLING.find(x => x.id === k.dataset.id);
   k.classList.add("geprueft", z.richtig ? "richtig" : "falsch");
-  $("#zwillingablesung").innerHTML = `<b>${z.name}</b><br>Soll: ${z.soll} · Ist: ${z.ist}`;
+  $("#zwillingablesung").innerHTML = `<b>${z.name}</b><br>Soll: ${z.soll}<br>Ist: ${z.ist}`;
   if (!z.richtig) { leiste("#leiste-zwilling", EXPERTIN, z.absage); return; }
   // Eigene, klar positive Rueckmeldung direkt hier - vorher gab es fuer den
   // richtigen Treffer gar kein Feedback auf diesem Screen, nur Stille bis
   // der Chat viel spaeter weiterging. Siehe TODO.md Punkt 16.
   leiste("#leiste-zwilling", EXPERTIN, "Genau — die Halterung hat einen Haarriss, das Bauteil ist gebrochen.", "gut");
-  $("#messpunkte").hidden = false;
-  anforderungenZeichnen();
+  setTimeout(() => {
+    zeigeAufgabenfolie(3, () => {
+      $("#zwillingSzene").hidden = true;
+      $("#messpunkte").hidden = false;
+      anforderungenZeichnen();
+    }, "Nimm nun die technischen Anforderungen am Bauteil auf.");
+  }, 1400);
 }
 $("#zwillingszene-wrap").addEventListener("click", e => zwillingKlick(e.target.closest(".hotspot")));
 $("#zwillingszene-wrap").addEventListener("keydown", e => {
@@ -1297,51 +1345,82 @@ function bild(inhalt) {
    TODO.md. */
 let fertigungStufe = "cad";
 const cadUebernommen = [];
+// Live-Werte waehrend des Ziehens (nicht erst nach dem Bestaetigen) - genau
+// das war der Wunsch: der Koerper waechst schon beim Schieben, nicht erst
+// danach. null = noch nicht angefasst, zeigt Platzhalter-Kontur.
+const cadLiveWert = {durchmesser: null, bohrung: null};
 
 function cadWireframeSVG() {
-  const hat = id => cadUebernommen.some(a => a.id === id);
+  const werkstoffDa = cadUebernommen.some(a => a.id === "werkstoff");
+  const d = cadLiveWert.durchmesser;
+  const b = cadLiveWert.bohrung;
+  const dFaktor = d ? Math.max(.55, Math.min(1.5, d / 18)) : 1;
+  const bRadius = b ? Math.max(3, Math.min(14, 8 * (b / 6))) : 8;
   return `
-    <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
-    <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-    ${hat("werkstoff") ? `<rect x="20" y="16" width="80" height="34" rx="3" fill="#009999" opacity=".14"/>` : ""}
-    ${hat("bohrung")
-      ? `<circle cx="60" cy="33" r="8" fill="none" stroke="#009999" stroke-width="2"/>`
-      : `<circle cx="60" cy="33" r="8" fill="none" stroke="var(--linie)" stroke-width="1.4" stroke-dasharray="2 2"/>`}
-    ${hat("durchmesser")
-      ? `<line x1="20" y1="58" x2="100" y2="58" stroke="#009999" stroke-width="1.4"/>
-         <line x1="20" y1="54" x2="20" y2="62" stroke="#009999" stroke-width="1.4"/>
-         <line x1="100" y1="54" x2="100" y2="62" stroke="#009999" stroke-width="1.4"/>
-         <text x="60" y="68" font-size="7" fill="#009999" text-anchor="middle">⌀ 18 mm</text>`
-      : `<line x1="20" y1="58" x2="100" y2="58" stroke="var(--linie)" stroke-width="1.2" stroke-dasharray="2 2"/>`}
+    <g transform="translate(60,33) scale(${dFaktor.toFixed(2)}) translate(-60,-33)">
+      <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+      <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+      ${werkstoffDa ? `<rect x="20" y="16" width="80" height="34" rx="3" fill="#009999" opacity=".14"/>` : ""}
+      <circle cx="60" cy="33" r="${bRadius.toFixed(1)}" fill="none"
+        stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="${b ? 2 : 1.4}" ${b ? "" : 'stroke-dasharray="2 2"'}/>
+    </g>
+    ${d
+      ? `<line x1="20" y1="60" x2="100" y2="60" stroke="#009999" stroke-width="1.4"/>
+         <line x1="20" y1="56" x2="20" y2="64" stroke="#009999" stroke-width="1.4"/>
+         <line x1="100" y1="56" x2="100" y2="64" stroke="#009999" stroke-width="1.4"/>
+         <text x="60" y="69" font-size="7" fill="#009999" text-anchor="middle">⌀ ${Math.round(d)} mm</text>`
+      : `<line x1="20" y1="60" x2="100" y2="60" stroke="var(--linie)" stroke-width="1.2" stroke-dasharray="2 2"/>`}
   `;
 }
 
 function cadZeichnen() {
-  const offen = ANFORDERUNGEN.filter(a => !cadUebernommen.includes(a));
+  const naechste = ANFORDERUNGEN.find(a => !cadUebernommen.includes(a));
+  let steuerung = "";
+  if (naechste && naechste.bereich) {
+    const [min, max] = naechste.bereich;
+    const aktuell = cadLiveWert[naechste.id] ?? min;
+    steuerung = `
+      <div class="cad-slider">
+        <label for="cadSlider">Ziel laut Analyse: <b>${naechste.wert}</b> — stelle den Wert ein:
+          <b id="cadSliderWert">${aktuell} ${naechste.einheit}</b></label>
+        <input type="range" id="cadSlider" min="${min}" max="${max}" step="1" value="${aktuell}">
+        <button class="orderknopf" type="button" id="cadUebernehmenBtn" disabled>Übernehmen ✓</button>
+      </div>`;
+  } else if (naechste) {
+    steuerung = `<button class="orderknopf" type="button" id="cadUebernehmenBtn">${naechste.label} übernehmen</button>`;
+  }
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Übernimm die Maße ins CAD-Modell</p>
     <div class="fertigung-karte">
-      ${bild(cadWireframeSVG())}
-      <small>Tippe die Werte an, die am Zwilling gemessen wurden.</small>
+      <div id="cadKoerper">${bild(cadWireframeSVG())}</div>
+      <small>${naechste ? "Der Körper wächst mit, während du den Wert einstellst." : "Alle Maße übernommen."}</small>
     </div>
-    ${offen.length ? `<div class="pillen">
-      ${offen.map(a => `<button class="pille" type="button" data-id="${a.id}">${a.label}: ${a.wert} übernehmen</button>`).join("")}
-    </div>` : ""}
+    ${steuerung}
     <div class="packliste">
-      <div class="zaehler ${offen.length ? "" : "voll"}">Parameter: ${cadUebernommen.length} von ${ANFORDERUNGEN.length}</div>
+      <div class="zaehler ${naechste ? "" : "voll"}">Parameter: ${cadUebernommen.length} von ${ANFORDERUNGEN.length}</div>
       ${cadUebernommen.length
         ? `<ul>${cadUebernommen.map(a => `<li>${a.label}: ${a.wert}</li>`).join("")}</ul>`
         : `<p class="leer">Noch nichts übernommen.</p>`}
     </div>
-    ${offen.length === 0 ? `<button class="orderknopf" id="cadWeiterBtn" type="button">3D-Modell fertig ✓</button>` : ""}`;
-  $("#fertigungInhalt").querySelectorAll(".pille").forEach(btn => {
-    btn.addEventListener("click", () => {
-      cadUebernommen.push(ANFORDERUNGEN.find(a => a.id === btn.dataset.id));
-      cadZeichnen();
-      if (cadUebernommen.length === ANFORDERUNGEN.length) {
-        leiste("#leiste-geraete", EXPERTIN, "Modell steht. Jetzt drucken wir einen Prototyp zum Testen.", "gut");
-      }
+    ${!naechste ? `<button class="orderknopf" id="cadWeiterBtn" type="button">3D-Modell fertig ✓</button>` : ""}`;
+
+  const slider = $("#cadSlider");
+  if (slider) {
+    slider.addEventListener("input", () => {
+      const wert = Number(slider.value);
+      cadLiveWert[naechste.id] = wert;
+      $("#cadSliderWert").textContent = `${wert} ${naechste.einheit}`;
+      $("#cadKoerper").innerHTML = bild(cadWireframeSVG());
+      $("#cadUebernehmenBtn").disabled = wert !== naechste.ziel;
     });
+  }
+  const uebernehmenBtn = $("#cadUebernehmenBtn");
+  if (uebernehmenBtn) uebernehmenBtn.addEventListener("click", () => {
+    cadUebernommen.push(naechste);
+    cadZeichnen();
+    if (cadUebernommen.length === ANFORDERUNGEN.length) {
+      leiste("#leiste-geraete", EXPERTIN, "Modell steht. Jetzt drucken wir einen Prototyp zum Testen.", "gut");
+    }
   });
   const weiter = $("#cadWeiterBtn");
   if (weiter) weiter.addEventListener("click", () => { fertigungStufe = "druck"; fertigungZeichnen(); });
