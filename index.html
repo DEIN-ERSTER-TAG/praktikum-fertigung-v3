@@ -332,6 +332,15 @@
   }
   .zwillingablesung { margin-top: 10px; font-size: .86rem; color: var(--tinte-weich); min-height: 1.4em; }
   .zwillingablesung b { color: var(--tinte); }
+  /* Deutlich sichtbarer Treffer-Hinweis, damit der Fund am Zwilling nicht im
+     kleingedruckten Soll/Ist-Text untergeht (Nutzer-Feedback: Screen wirkte
+     zu kurz/unklar nach dem richtigen Klick). */
+  .fehler-gefunden {
+    margin-top: 14px; padding: 14px 16px; border: 2px solid #C03A57; border-radius: 10px;
+    background: rgba(192,58,87,.06);
+  }
+  .fehler-titel { margin: 0 0 6px; font-size: 1.1rem; font-weight: 900; letter-spacing: .04em; color: #C03A57; }
+  .fehler-gefunden p:not(.fehler-titel) { margin: 0; font-size: .92rem; color: var(--tinte); min-height: 1.3em; }
   .zwilling-live {
     display: flex; justify-content: space-between; gap: 6px; margin-bottom: 8px;
     font-size: .66rem; color: var(--tinte-weich); background: var(--flaeche);
@@ -568,6 +577,12 @@
       <source src="audio/fraesen.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- Klingelton waehrend des "klingelt"-Zustands, rein atmosphaerisch,
+         kein Sprachinhalt - daher kein Untertitel noetig. -->
+    <audio id="klingeltonAudio" hidden preload="none" loop>
+      <source src="audio/klingelton.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Aufgabenfolie: Vollbild-Zwischenscreen bei jedem der 5 Schritt-Wechsel,
          ersetzt die fruehere Seitenspalte neben dem Handy - alles spielt sich
          jetzt im Bildschirm selbst ab (komplett mobile, nichts mehr daneben).
@@ -615,6 +630,10 @@
           </div>
           <div class="zwilling-wrap" id="zwillingszene-wrap"></div>
           <p class="zwillingablesung" id="zwillingablesung">Tippe eine markierte Stelle an der Anlage an.</p>
+          <div class="fehler-gefunden" id="fehlerGefunden" hidden aria-live="polite">
+            <p class="fehler-titel">FEHLER</p>
+            <p id="fehlerBeschreibung"></p>
+          </div>
         </div>
         <div id="messpunkte" hidden></div>
       </div>
@@ -635,7 +654,7 @@
       <div class="auftragsleiste" id="leiste-plan" hidden></div>
       <div class="inhalt">
         <p class="tagkopf">Einsatz beim Kunden <b>ZISCH Getränke GmbH</b></p>
-        <p class="frage">In welcher Reihenfolge macht ihr das?</p>
+        <p class="frage" id="reihenfolgeFrage">In welcher Reihenfolge macht ihr das?</p>
         <div class="pillen" id="reihenfolgeKarten"></div>
         <div class="packliste" id="reihenfolgeListe"></div>
       </div>
@@ -648,8 +667,11 @@
         <div class="geschafft">✓ Geschafft — das Ersatzteil sitzt</div>
         <div class="blase">
           <div class="wer">Sabine</div>
-          Hab gerade gesehen, wie ihr das sortiert habt. <b>Du hast Talent!</b>
-          Genau die richtige Reihenfolge! Schau doch mal auf unserer Website, ob ein
+          Hab gerade den ganzen Vorgang gesehen — <b>das hast du toll gemacht</b>, wie du den
+          Notfall mit dem Greifarm bei ZISCH gelöst hast! Du hast das kaputte Bauteil analysiert,
+          die Maße aufgenommen, ein CAD-Modell konstruiert, den Prototyp gedruckt und getestet,
+          das Ersatzteil gefräst und am Ende alles eingebaut und dokumentiert. Schau doch mal auf
+          unserer Website, ob ein
           Schülerpraktikum oder eine Ausbildung für dich in Frage kommt.
         </div>
         <div class="wege">
@@ -801,6 +823,26 @@ function tippe(n) {
   })();
 }
 
+/* Kleine, wiederverwendbare Tipp-Animation fuer einzelne Textbausteine
+   ausserhalb der Einstiegstexte (z.B. den Fehler-Hinweis am Zwilling) -
+   gleiches Prinzip wie tippe() oben, aber ohne die feste EINSTIEGSTEXT-Liste.
+   Respektiert reduzierte Bewegung/verstecktes Tab wie das Original. */
+function tippeText(el, text, tempo = 16) {
+  if (document.visibilityState === "hidden" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = text;
+    return;
+  }
+  el.textContent = "";
+  let i = 0;
+  (function weiter() {
+    if (i >= text.length) return;
+    i++;
+    el.textContent = text.slice(0, i);
+    setTimeout(weiter, tempo);
+  })();
+}
+
 $("#einstieg").addEventListener("click", e => {
   if (e.target.id !== "losGehts") alleszeigen();
 });
@@ -816,7 +858,7 @@ else setTimeout(() => tippe(0), 350);
    des Spiels "entsperrt" die Elemente fuer spaetere play()-Aufrufe ohne
    frischen Klick. */
 function audioEntsperren() {
-  [$("#anrufAudio"), $("#lenaZwillingAudio"), $("#fraesAudio")].forEach(a => {
+  [$("#anrufAudio"), $("#lenaZwillingAudio"), $("#fraesAudio"), $("#klingeltonAudio")].forEach(a => {
     if (!a) return;
     const p = a.play();
     if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
@@ -960,6 +1002,9 @@ function anrufOeffnen() {
   $("#anrufKlingelt").hidden = false;
   $("#anrufVerbunden").hidden = true;
   $("#anrufAblehnenHinweis").hidden = true;
+  const klingelton = $("#klingeltonAudio");
+  klingelton.currentTime = 0;
+  klingelton.play().catch(() => {});
 }
 
 $("#anrufAblehnen").addEventListener("click", () => {
@@ -970,6 +1015,9 @@ $("#anrufAnnehmen").addEventListener("click", () => {
   $("#anrufscreen").classList.remove("klingelt");
   $("#anrufKlingelt").hidden = true;
   $("#anrufVerbunden").hidden = false;
+  const klingelton = $("#klingeltonAudio");
+  klingelton.pause();
+  klingelton.currentTime = 0;
   $("#anrufStatus").textContent = "Verbunden";
   $("#anrufUntertitel").textContent = "";
   const audio = $("#anrufAudio");
@@ -1253,10 +1301,31 @@ const ANFORDERUNGEN = [
    ziel: 18, bereich: [10, 26], einheit: "mm"},
   {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
    ziel: 6, bereich: [2, 12], einheit: "mm"},
-  {id: "werkstoff", label: "Werkstoff", wert: "Stahl C45", aktion: "Der Werkstoff wird geprüft"}
+  {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Die Wandstärke wird geprüft",
+   ziel: 3, bereich: [1, 8], einheit: "mm"}
 ];
 const anforderungenErfasst = [];
 let messungTimer = null;
+
+/* Kleine Skizze des Bauteils, das gerade gemessen wird - dieselbe Kontur wie
+   spaeter im CAD-Wireframe (Wiedererkennung), aber ohne Slider-Skalierung:
+   nur die jeweils betroffene Stelle ist hervorgehoben, macht nachvollziehbar,
+   WAS da gerade vermessen wird statt nur wozu ein Text-Button zu lesen.
+   Siehe TODO.md. */
+function bauteilSkizzeSVG(hervorhebung) {
+  return `
+    <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+    ${hervorhebung === "wandstaerke" ? `<rect x="20" y="16" width="9" height="34" fill="#009999" opacity=".4"/>` : ""}
+    <circle cx="60" cy="33" r="8" fill="none"
+      stroke="${hervorhebung === "bohrung" ? "#009999" : "var(--linie)"}"
+      stroke-width="${hervorhebung === "bohrung" ? 2.4 : 1.4}" ${hervorhebung === "bohrung" ? "" : 'stroke-dasharray="2 2"'}/>
+    ${hervorhebung === "durchmesser" ? `
+      <line x1="20" y1="60" x2="100" y2="60" stroke="#009999" stroke-width="1.6"/>
+      <line x1="20" y1="56" x2="20" y2="64" stroke="#009999" stroke-width="1.6"/>
+      <line x1="100" y1="56" x2="100" y2="64" stroke="#009999" stroke-width="1.6"/>` : ""}
+  `;
+}
 
 function anforderungenZeichnen() {
   const box = $("#messpunkte");
@@ -1264,6 +1333,7 @@ function anforderungenZeichnen() {
   box.innerHTML = `
     <p class="frage">Nimm die technischen Anforderungen auf</p>
     ${naechste ? `<div class="fertigung-karte">
+      ${bild(bauteilSkizzeSVG(naechste.id))}
       <button class="orderknopf" type="button" id="messungBtn">${naechste.label} messen</button>
     </div>` : ""}
     <div class="packliste">
@@ -1283,6 +1353,7 @@ function messungSimulieren(a) {
   $("#messpunkte").innerHTML = `
     <p class="frage">Nimm die technischen Anforderungen auf</p>
     <div class="fertigung-karte">
+      ${bild(bauteilSkizzeSVG(a.id))}
       <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
       <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>
     </div>`;
@@ -1294,11 +1365,20 @@ function messungSimulieren(a) {
     $("#messungProzent").textContent = Math.round(prozent) + " %";
     if (prozent >= 100) {
       clearInterval(messungTimer);
-      anforderungenErfasst.push(a);
+      // Erst das Ergebnis kurz stehen lassen (WAS wurde gemessen), statt
+      // sofort weiterzuspringen - vorher verschwand die Messung wortlos in
+      // der Liste. Siehe TODO.md.
+      $("#messpunkte").innerHTML = `
+        <p class="frage">Nimm die technischen Anforderungen auf</p>
+        <div class="fertigung-karte">
+          ${bild(bauteilSkizzeSVG(a.id))}
+          <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>
+        </div>`;
       setTimeout(() => {
+        anforderungenErfasst.push(a);
         anforderungenZeichnen();
         if (anforderungenErfasst.length === ANFORDERUNGEN.length) setTimeout(zwillingLoesen, 500);
-      }, 500);
+      }, 1300);
     }
   }, 160);
 }
@@ -1316,13 +1396,20 @@ function zwillingKlick(k) {
   // richtigen Treffer gar kein Feedback auf diesem Screen, nur Stille bis
   // der Chat viel spaeter weiterging. Siehe TODO.md Punkt 16.
   leiste("#leiste-zwilling", EXPERTIN, "Genau — die Halterung hat einen Haarriss, das Bauteil ist gebrochen.", "gut");
+  // Auffaelliger als die kleine Soll/Ist-Zeile: Nutzer-Feedback war, dass nach
+  // dem richtigen Treffer nicht klar genug wurde, dass der Fehler gefunden
+  // ist. Getippter Text statt einfachem Einblenden, gleiches Prinzip wie die
+  // Einstiegstexte. Siehe TODO.md.
+  $("#fehlerGefunden").hidden = false;
+  tippeText($("#fehlerBeschreibung"),
+    "Die Greifer-Halterung hat einen Haarriss und ist gebrochen — dafür gibt es kein Ersatzteil.");
   setTimeout(() => {
     zeigeAufgabenfolie(3, () => {
       $("#zwillingSzene").hidden = true;
       $("#messpunkte").hidden = false;
       anforderungenZeichnen();
     }, "Nimm nun die technischen Anforderungen am Bauteil auf.");
-  }, 1400);
+  }, 2600);
 }
 $("#zwillingszene-wrap").addEventListener("click", e => zwillingKlick(e.target.closest(".hotspot")));
 $("#zwillingszene-wrap").addEventListener("keydown", e => {
@@ -1348,19 +1435,22 @@ const cadUebernommen = [];
 // Live-Werte waehrend des Ziehens (nicht erst nach dem Bestaetigen) - genau
 // das war der Wunsch: der Koerper waechst schon beim Schieben, nicht erst
 // danach. null = noch nicht angefasst, zeigt Platzhalter-Kontur.
-const cadLiveWert = {durchmesser: null, bohrung: null};
+const cadLiveWert = {durchmesser: null, bohrung: null, wandstaerke: null};
 
 function cadWireframeSVG() {
-  const werkstoffDa = cadUebernommen.some(a => a.id === "werkstoff");
   const d = cadLiveWert.durchmesser;
   const b = cadLiveWert.bohrung;
+  const w = cadLiveWert.wandstaerke;
   const dFaktor = d ? Math.max(.55, Math.min(1.5, d / 18)) : 1;
   const bRadius = b ? Math.max(3, Math.min(14, 8 * (b / 6))) : 8;
+  const wDicke = w ? Math.max(2, Math.min(22, 8 * (w / 3))) : 0;
   return `
     <g transform="translate(60,33) scale(${dFaktor.toFixed(2)}) translate(-60,-33)">
       <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
       <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-      ${werkstoffDa ? `<rect x="20" y="16" width="80" height="34" rx="3" fill="#009999" opacity=".14"/>` : ""}
+      ${w
+        ? `<rect x="20" y="16" width="${wDicke.toFixed(1)}" height="34" fill="#009999" opacity=".5"/>`
+        : `<rect x="20" y="16" width="7" height="34" fill="none" stroke="var(--linie)" stroke-width="1.2" stroke-dasharray="2 2"/>`}
       <circle cx="60" cy="33" r="${bRadius.toFixed(1)}" fill="none"
         stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="${b ? 2 : 1.4}" ${b ? "" : 'stroke-dasharray="2 2"'}/>
     </g>
@@ -1426,35 +1516,54 @@ function cadZeichnen() {
   if (weiter) weiter.addEventListener("click", () => { fertigungStufe = "druck"; fertigungZeichnen(); });
 }
 
-const DRUCKER_SVG = `
-  <rect x="20" y="50" width="70" height="8" rx="2" fill="#4A5C6E"/>
-  <rect x="26" y="14" width="8" height="40" fill="#8A8AA3"/>
-  <rect x="86" y="14" width="8" height="40" fill="#8A8AA3"/>
-  <rect x="26" y="14" width="68" height="6" rx="2" fill="#8A8AA3"/>
-  <rect x="44" y="18" width="20" height="6" rx="2" fill="#F59B3E"/>
-  <g fill="none" stroke="#009999" stroke-width="2">
-    <rect x="46" y="34" width="16" height="4"/>
-    <rect x="46" y="39" width="16" height="4"/>
-    <rect x="46" y="44" width="16" height="4"/>
-  </g>`;
+/* Druckrahmen + das Bauteil selbst, das sich Schicht fuer Schicht von unten
+   nach oben fuellt - synchron zum echten Fortschrittswert (nicht nur Deko
+   wie der Fraes-Loop). Dieselbe Kontur wie im CAD-Wireframe, damit klar
+   bleibt: das ist dasselbe Bauteil, das gerade konfiguriert wurde. Siehe
+   TODO.md. */
+function druckKoerperSVG(prozent) {
+  const koerperHoehe = 34, koerperOben = 16;
+  const gefuellt = (prozent / 100) * koerperHoehe;
+  const fuellYStart = koerperOben + (koerperHoehe - gefuellt);
+  return `
+    <defs><clipPath id="druckClip"><rect x="20" y="${fuellYStart.toFixed(1)}" width="80" height="${gefuellt.toFixed(1)}"/></clipPath></defs>
+    <rect x="20" y="50" width="70" height="8" rx="2" fill="#4A5C6E"/>
+    <rect x="26" y="10" width="8" height="8" fill="#8A8AA3"/>
+    <rect x="86" y="10" width="8" height="8" fill="#8A8AA3"/>
+    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" fill="#009999" opacity=".5" clip-path="url(#druckClip)"/>
+    ${prozent < 100 ? `<line x1="16" y1="${fuellYStart.toFixed(1)}" x2="104" y2="${fuellYStart.toFixed(1)}" stroke="#F59B3E" stroke-width="2"/>` : ""}
+  `;
+}
+
+let druckTimer = null;
 
 function druckZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Prototyp im 3D-Drucker testen</p>
-    <div class="fertigung-karte">${bild(DRUCKER_SVG)}</div>
-    <div class="ladebalken"><div class="ladebalken-fuellung" id="druckFuellung"></div></div>
-    <p class="lade-label" id="druckLabel">Prototyp wird gedruckt …</p>`;
-  setTimeout(() => { $("#druckFuellung").style.width = "100%"; }, 50);
-  setTimeout(() => {
-    $("#druckLabel").textContent = "Fertig.";
-    $("#fertigungInhalt").insertAdjacentHTML("beforeend",
-      `<button class="orderknopf" id="druckWeiterBtn" type="button">Einbauen &amp; Passgenauigkeit testen</button>`);
-    $("#druckWeiterBtn").addEventListener("click", () => {
-      $("#druckWeiterBtn").disabled = true;
-      leiste("#leiste-geraete", EXPERTIN, "Passt genau — gut, dass wir das erst am Prototyp geprüft haben.", "gut");
-      setTimeout(() => { fertigungStufe = "fraesen"; fertigungZeichnen(); }, 1600);
-    });
-  }, 2600);
+    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(0))}</div></div>
+    <div class="ladebalken"><div class="ladebalken-fuellung takt" id="druckFuellung"></div></div>
+    <p class="lade-label" id="druckLabel">Prototyp wird gedruckt … <b id="druckProzent">0 %</b></p>`;
+  let prozent = 0;
+  clearInterval(druckTimer);
+  druckTimer = setInterval(() => {
+    prozent = Math.min(100, prozent + 4 + Math.random() * 5);
+    $("#druckFuellung").style.width = prozent + "%";
+    $("#druckProzent").textContent = Math.round(prozent) + " %";
+    $("#druckKoerper").innerHTML = bild(druckKoerperSVG(prozent));
+    if (prozent >= 100) {
+      clearInterval(druckTimer);
+      $("#druckLabel").textContent = "Fertig.";
+      $("#fertigungInhalt").insertAdjacentHTML("beforeend",
+        `<button class="orderknopf" id="druckWeiterBtn" type="button">Einbauen &amp; Passgenauigkeit testen</button>`);
+      $("#druckWeiterBtn").addEventListener("click", () => {
+        $("#druckWeiterBtn").disabled = true;
+        leiste("#leiste-geraete", EXPERTIN, "Passt genau — gut, dass wir das erst am Prototyp geprüft haben.", "gut");
+        setTimeout(() => { fertigungStufe = "fraesen"; fertigungZeichnen(); }, 1600);
+      });
+    }
+  }, 140);
 }
 
 /* Vier leicht unterschiedliche Frames statt echter Fotos (Lizenz- und
@@ -1547,10 +1656,25 @@ const REIHENFOLGE = [
 // Feste, gemischte Anzeige-Reihenfolge (nicht die Loesung selbst).
 const REIHENFOLGE_ANZEIGE = [REIHENFOLGE[2], REIHENFOLGE[0], REIHENFOLGE[3], REIHENFOLGE[1]];
 const reihenfolgeErledigt = [];
+/* Gefuehrter Dialog statt einer offenen Karten-Auswahl von Anfang an -
+   Nutzer-Wunsch: "Was machst du als erstes?" -> Antwort -> "Und jetzt, was
+   kommt als naechstes?" usw. Die Optionen werden mit jeder richtigen Antwort
+   weniger, statt alle vier permanent nebeneinander liegen zu lassen. Siehe
+   TODO.md. */
+const REIHENFOLGE_FRAGEN = [
+  "Du bist beim Kunden. Was machst du als erstes?",
+  "Und jetzt, was kommt als nächstes?",
+  "Weiter geht's — was kommt jetzt?",
+  "Und zum Schluss?"
+];
 
 function reihenfolgeZeichnen() {
-  $("#reihenfolgeKarten").innerHTML = REIHENFOLGE_ANZEIGE.map(r => `
-    <button class="pille" type="button" data-id="${r.id}" ${reihenfolgeErledigt.includes(r) ? "disabled" : ""}>${r.label}</button>
+  const offen = REIHENFOLGE_ANZEIGE.filter(r => !reihenfolgeErledigt.includes(r));
+  $("#reihenfolgeFrage").textContent = offen.length
+    ? (REIHENFOLGE_FRAGEN[reihenfolgeErledigt.length] || "Was kommt als nächstes?")
+    : "Alles einsortiert.";
+  $("#reihenfolgeKarten").innerHTML = offen.map(r => `
+    <button class="pille" type="button" data-id="${r.id}">${r.label}</button>
   `).join("");
   const voll = reihenfolgeErledigt.length === REIHENFOLGE.length;
   $("#reihenfolgeListe").innerHTML =
@@ -1573,10 +1697,10 @@ $("#reihenfolgeKarten").addEventListener("click", e => {
   reihenfolgeErledigt.push(r);
   reihenfolgeZeichnen();
   if (reihenfolgeErledigt.length < REIHENFOLGE.length) {
-    leiste("#leiste-plan", "Eingetragen", `<b>${r.label}</b> steht. Weiter mit dem nächsten Schritt.`, "gut");
+    leiste("#leiste-plan", "Richtig!", `<b>${r.label}</b> steht.`, "gut");
     return;
   }
-  leiste("#leiste-plan", "Eingetragen",
+  leiste("#leiste-plan", "Richtig!",
          "Genau so: erst einbauen, dann in Betrieb nehmen, testen und dokumentieren.", "gut");
   setzeZustand("fertig");
   setTimeout(() => {
