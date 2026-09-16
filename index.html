@@ -66,34 +66,36 @@
   .seitenlogo { position: absolute; top: 22px; right: 26px; }
 
   /* ---------- Einstieg: erklaert einmal, worum es geht ----------
-     Kein Foto mehr (Nutzer-Feedback: muss aufs Handy passen, Foto raus,
-     Texte kuerzer) - nur noch der Text, der sich tippt, damit man ihn liest,
-     statt eine Wand zu ueberspringen. Siehe TODO.md. */
+     Jetzt ein Screen INNERHALB des Handy-Mockups statt einer Vollbild-Folie
+     davor (Nutzer-Feedback: Schueler*innen starten das Praktikum mit dem
+     Handy, der Titelscreen soll selbst eine Ansicht auf dem Handy sein statt
+     einer eigenstaendigen Vorschaltseite). Deshalb feste rem-Groessen statt
+     vw-basiertem clamp() - die alten Werte waren auf Viewport-Breite skaliert
+     und waeren jetzt, im schmalen Handy-Rahmen, viel zu gross gewesen. Kein
+     eigenes Logo mehr im Screen (das aussenliegende .seitenlogo ist jetzt
+     ohnehin die ganze Zeit sichtbar, kein Doppel-Logo-Bedarf). Siehe TODO.md. */
+  /* Bewusst kein display:flex hier: als Flex-Item duerfen Kinder per Default
+     unter ihre Inhaltshoehe schrumpfen (flex-shrink:1), was bei wenig Platz
+     (Handy-Bildschirm!) genau hier zu ueberlappendem, zusammengequetschtem
+     Text fuehrte - block-Layout stapelt natuerlich von oben, ganz ohne dieses
+     Risiko. */
   .einstieg {
-    position: fixed; inset: 0; z-index: 40; background: var(--weiss);
-    display: flex; flex-direction: column;
+    flex: 1; display: block;
+    padding: 20px 20px 24px; overflow-y: auto; background: var(--weiss);
   }
   .einstieg[hidden] { display: none !important; }
-  /* Oben ausgerichtet, nicht zentriert: der Text waechst beim Tippen nach
-     unten, statt bei jedem neuen Absatz den ganzen Block zu verschieben. */
-  .einstieg-text {
-    display: flex; flex-direction: column; justify-content: flex-start;
-    padding: clamp(34px, 8vh, 86px) min(6vw, 60px) 40px; overflow-y: auto;
-  }
-  .einstieg-logo { display: flex; justify-content: center; margin-bottom: 30px; }
-  .einstieg-logo svg { width: 200px; height: auto; }
   .eyebrow {
-    font-size: clamp(.82rem, .95vw, .98rem); font-weight: 800; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--orange-dunkel); margin-bottom: 18px; min-height: 1.2em;
+    font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--orange-dunkel); margin-bottom: 12px; min-height: 1.2em;
   }
   .einstieg h1, .eyebrow { font-family: var(--schrift-titel); }
   .einstieg h1 {
-    font-size: clamp(1.75rem, 2.6vw, 2.7rem); line-height: 1.18; margin: 0 0 26px;
-    font-weight: 500; letter-spacing: 0; text-wrap: balance;
+    font-size: 1.42rem; line-height: 1.22; margin: 0 0 16px;
+    font-weight: 600; letter-spacing: 0; text-wrap: balance;
   }
   .einstieg p {
-    font-size: clamp(1.08rem, 1.28vw, 1.38rem); line-height: 1.55;
-    color: var(--tinte-weich); margin: 0 0 16px;
+    font-size: .92rem; line-height: 1.5;
+    color: var(--tinte-weich); margin: 0 0 12px;
   }
   .einstieg p:empty { margin: 0; }
   .einstieg p b { color: var(--tinte); }
@@ -105,15 +107,12 @@
   }
   @keyframes blinken { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
   .einstieg .los {
-    align-self: flex-start; font: inherit; font-size: 1.08rem; font-weight: 700; color: #fff;
-    background: var(--orange); border: none; border-radius: 9px; padding: 17px 42px;
-    cursor: pointer; margin-top: 18px; opacity: 0; transition: opacity .5s;
+    display: inline-block; font: inherit; font-size: .94rem; font-weight: 700; color: #fff;
+    background: var(--orange); border: none; border-radius: 9px; padding: 13px 26px;
+    cursor: pointer; margin-top: 8px; opacity: 0; transition: opacity .5s;
   }
   .einstieg .los.da { opacity: 1; }
   .einstieg .los:hover { background: var(--orange-dunkel); }
-  @media (max-width: 860px) {
-    .einstieg-text { padding: 28px 22px; }
-  }
 
   /* ---------- Gerät ---------- */
   /* Die Breite fuehrt, die Hoehe folgt dem Seitenverhaeltnis. Nur so weiss das
@@ -519,25 +518,22 @@
   </svg>
 </span>
 
-<div class="einstieg" id="einstieg">
-  <div class="einstieg-text">
-    <div class="einstieg-logo" id="einstiegLogo"></div>
-    <div class="eyebrow" id="e0"></div>
-    <h1 id="e1"></h1>
-    <p id="e2"></p>
-    <p id="e3"></p>
-    <p id="e4"></p>
-    <p id="e5"></p>
-    <button class="los" id="losGehts" type="button">Los geht's</button>
-  </div>
-</div>
-
 <div class="geraet">
   <div class="schirm">
 
     <div class="status"><span>07:12</span><span class="rechts">▮▮▮ 78 %</span></div>
 
-    <div class="start" id="start">
+    <div class="einstieg" id="einstieg">
+      <div class="eyebrow" id="e0"></div>
+      <h1 id="e1"></h1>
+      <p id="e2"></p>
+      <p id="e3"></p>
+      <p id="e4"></p>
+      <p id="e5"></p>
+      <button class="los" id="losGehts" type="button">Los geht's</button>
+    </div>
+
+    <div class="start" id="start" hidden>
       <div class="apps">
         <button class="app" data-app="team" type="button"><span class="symbol">💬</span><small>Chat</small></button>
         <button class="app" data-app="zwilling" type="button"><span class="symbol">🪞</span><small>Zwilling</small></button>
@@ -661,6 +657,7 @@
             <div class="fehler-gefunden" id="fehlerGefunden" hidden aria-live="polite">
               <p class="fehler-titel">FEHLER</p>
               <p id="fehlerBeschreibung"></p>
+              <button class="orderknopf" type="button" id="fehlerWeiterBtn">Weiter</button>
             </div>
           </div>
           <p class="zwillingablesung" id="zwillingablesung"></p>
@@ -757,7 +754,6 @@ const LOGO_KLEIN = `<svg width="74" height="17" viewBox="0 0 132 30" aria-hidden
   <text x="0" y="23" font-family="Segoe UI, Arial, sans-serif"
         font-size="25" font-weight="700" fill="#009999" letter-spacing="1.5">SIEMENS</text></svg>`;
 document.querySelectorAll(".logoklein").forEach(s => s.innerHTML = LOGO_KLEIN);
-$("#einstiegLogo").innerHTML = document.querySelector(".seitenlogo").innerHTML;
 
 /* ---------- Aufgaben ----------
    Ein Schritt hat mehrere Zustaende: "Tippe auf die Team-App" ist erledigt,
@@ -1404,6 +1400,50 @@ function bauteilSkizzeSVG(hervorhebung) {
   `;
 }
 
+/* Messschieber-Grafik fuer Durchmesser (Aussenbacken, umschliessen den
+   Block) und Bohrungsmass (Innenmessschnaebel, spreizen sich in der
+   Bohrung auf) - derselbe Werkzeugtyp, nur die andere Seite. Der
+   Backenabstand skaliert live mit dem Schieberwert, Nutzer-Idee "wie misst
+   man das wirklich". Siehe TODO.md. */
+function caliperSVG(wert, a) {
+  const [min, max] = a.bereich;
+  const frac = (wert - min) / (max - min);
+  const gap = 24 + frac * 56;
+  const mitte = 60;
+  const linksX = mitte - gap / 2, rechtsX = mitte + gap / 2;
+  if (a.id === "bohrung") {
+    return `
+      <circle cx="${mitte}" cy="38" r="30" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+      <rect x="${mitte - 3}" y="6" width="6" height="30" fill="#4A5C6E"/>
+      <path d="M${linksX} 38 L${mitte - 3} 30 M${linksX} 38 L${mitte - 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M${rechtsX} 38 L${mitte + 3} 30 M${rechtsX} 38 L${mitte + 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="${linksX}" cy="38" r="3" fill="#F59B3E"/>
+      <circle cx="${rechtsX}" cy="38" r="3" fill="#F59B3E"/>
+    `;
+  }
+  return `
+    <rect x="${mitte - 14}" y="26" width="28" height="24" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <line x1="10" y1="58" x2="110" y2="58" stroke="#4A5C6E" stroke-width="3"/>
+    <rect x="${linksX - 4}" y="20" width="6" height="42" rx="2" fill="#009999"/>
+    <rect x="${rechtsX - 2}" y="20" width="6" height="42" rx="2" fill="#009999"/>
+  `;
+}
+
+/* Sonde fuers Wanddicken-Messgeraet - bewusst ein anderes Werkzeug/eine
+   andere Interaktion als der Caliper (Nutzer-Entscheidung: eine Wand misst
+   man von aussen mit Ultraschall, nicht mit einem Messschieber). Start per
+   Klick/Enter statt per Halten-Geste - Halten ist fuer Tastatur-/
+   Switch-Bedienung schwer zugaenglich, ein normaler Button-Klick loest
+   denselben simulierten Messvorgang zuverlaessig aus. Siehe TODO.md. */
+function sondeSVG() {
+  return `
+    <rect x="18" y="42" width="84" height="18" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <rect x="50" y="10" width="20" height="36" rx="4" fill="#4A5C6E"/>
+    <circle cx="60" cy="46" r="5" fill="#009999"/>
+    <line x1="60" y1="10" x2="60" y2="2" stroke="#8A8AA3" stroke-width="2"/>
+  `;
+}
+
 /* Lena kuendigt jede Messung im Chat an, statt den Button stumm zu zeigen -
    Nutzer-Feedback + drei konkrete Beispielsaetze (erste/mittlere/letzte
    Anforderung). Position entscheidet den Ton: erste = foermliche Aufforderung,
@@ -1420,30 +1460,81 @@ function anforderungenZeichnen() {
   const naechste = ANFORDERUNGEN[index];
   box.innerHTML = `
     <p class="frage">Nimm die technischen Anforderungen auf</p>
-    ${naechste ? `<div class="fertigung-karte">
-      ${bild(bauteilSkizzeSVG(naechste.id))}
-      <button class="orderknopf" type="button" id="messungBtn">${naechste.label} messen</button>
-    </div>` : ""}
+    ${naechste ? `<div id="messWerkzeugFlaeche"></div>` : ""}
     <div class="packliste">
       <div class="zaehler ${naechste ? "" : "voll"}">Anforderungen: ${anforderungenErfasst.length} von ${ANFORDERUNGEN.length}</div>
       ${anforderungenErfasst.length
         ? `<ul>${anforderungenErfasst.map(a => `<li>${a.label}: ${a.wert}</li>`).join("")}</ul>`
         : `<p class="leer">Noch nichts erfasst.</p>`}
     </div>`;
-  const btn = $("#messungBtn");
-  if (btn) btn.addEventListener("click", () => messungSimulieren(naechste));
-  if (naechste) leiste("#leiste-zwilling", EXPERTIN, anforderungAnsage(naechste, index), "gut");
-  else leiste("#leiste-zwilling", EXPERTIN, "Fertig. Nun geht's zum CAD-Modell.", "gut");
+  if (naechste) {
+    zeigeMessWerkzeug(naechste);
+    leiste("#leiste-zwilling", EXPERTIN, anforderungAnsage(naechste, index), "gut");
+  } else {
+    leiste("#leiste-zwilling", EXPERTIN, "Fertig. Nun geht's zum CAD-Modell.", "gut");
+  }
 }
 
-/* Tickt in kleinen, zufaelligen Schritten statt in einem einzigen Sprung -
-   wirkt dadurch wie eine echte laufende Messung statt einer Ladeanimation
-   mit fixer Dauer. */
-function messungSimulieren(a) {
+/* Werkzeug je nach Anforderung: Messschieber (Zieh-Slider, Durchmesser/
+   Bohrung) oder Sonde (Klick-Start, Wandstaerke). */
+function zeigeMessWerkzeug(a) {
+  if (a.id === "wandstaerke") {
+    $("#messWerkzeugFlaeche").innerHTML = `
+      <div class="fertigung-karte">
+        ${bild(sondeSVG())}
+        <small>Sonde von außen auf die Fläche aufsetzen.</small>
+      </div>
+      <button class="orderknopf" type="button" id="messungBtn">Sonde aufsetzen</button>`;
+    $("#messungBtn").addEventListener("click", () => messungSimulieren(a));
+    return;
+  }
+  const [min, max] = a.bereich;
+  const istBohrung = a.id === "bohrung";
+  $("#messWerkzeugFlaeche").innerHTML = `
+    <div class="fertigung-karte">
+      <div id="caliperKoerper">${bild(caliperSVG(min, a))}</div>
+      <small>Messschieber ${istBohrung ? "auseinanderziehen" : "zusammendrücken"}, bis er das Bauteil berührt.</small>
+    </div>
+    <div class="cad-slider">
+      <label for="caliperSlider">Messwert: <b id="caliperWert">${min} ${a.einheit}</b></label>
+      <input type="range" id="caliperSlider" min="${min}" max="${max}" step="1" value="${min}">
+      <button class="orderknopf" type="button" id="caliperUebernehmenBtn" disabled>Wert übernehmen ✓</button>
+    </div>`;
+  $("#caliperSlider").addEventListener("input", () => {
+    const wert = Number($("#caliperSlider").value);
+    $("#caliperWert").textContent = `${wert} ${a.einheit}`;
+    $("#caliperKoerper").innerHTML = bild(caliperSVG(wert, a));
+    $("#caliperUebernehmenBtn").disabled = wert !== a.ziel;
+  });
+  $("#caliperUebernehmenBtn").addEventListener("click", () => messErgebnisZeigen(a));
+}
+
+/* Ergebnis kurz stehen lassen (WAS wurde gemessen), statt sofort weiter-
+   zuspringen - dieselbe Anzeige fuer beide Werkzeuge (Caliper-Uebernehmen
+   und Sonden-Fortschritt enden hier gemeinsam). Siehe TODO.md. */
+function messErgebnisZeigen(a) {
   $("#messpunkte").innerHTML = `
     <p class="frage">Nimm die technischen Anforderungen auf</p>
     <div class="fertigung-karte">
       ${bild(bauteilSkizzeSVG(a.id))}
+      <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>
+    </div>`;
+  setTimeout(() => {
+    anforderungenErfasst.push(a);
+    anforderungenZeichnen();
+    if (anforderungenErfasst.length === ANFORDERUNGEN.length) setTimeout(zwillingLoesen, 500);
+  }, 1300);
+}
+
+/* Tickt in kleinen, zufaelligen Schritten statt in einem einzigen Sprung -
+   wirkt dadurch wie eine echte laufende Messung statt einer Ladeanimation
+   mit fixer Dauer. Nur noch fuer die Sonde (Wandstaerke) im Einsatz, der
+   Caliper (Durchmesser/Bohrung) bestaetigt direkt per Slider. */
+function messungSimulieren(a) {
+  $("#messpunkte").innerHTML = `
+    <p class="frage">Nimm die technischen Anforderungen auf</p>
+    <div class="fertigung-karte">
+      ${bild(sondeSVG())}
       <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
       <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>
     </div>`;
@@ -1455,20 +1546,7 @@ function messungSimulieren(a) {
     $("#messungProzent").textContent = Math.round(prozent) + " %";
     if (prozent >= 100) {
       clearInterval(messungTimer);
-      // Erst das Ergebnis kurz stehen lassen (WAS wurde gemessen), statt
-      // sofort weiterzuspringen - vorher verschwand die Messung wortlos in
-      // der Liste. Siehe TODO.md.
-      $("#messpunkte").innerHTML = `
-        <p class="frage">Nimm die technischen Anforderungen auf</p>
-        <div class="fertigung-karte">
-          ${bild(bauteilSkizzeSVG(a.id))}
-          <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>
-        </div>`;
-      setTimeout(() => {
-        anforderungenErfasst.push(a);
-        anforderungenZeichnen();
-        if (anforderungenErfasst.length === ANFORDERUNGEN.length) setTimeout(zwillingLoesen, 500);
-      }, 1300);
+      messErgebnisZeigen(a);
     }
   }, 160);
 }
@@ -1501,16 +1579,16 @@ function zwillingKlick(k) {
   $("#fehlerGefunden").hidden = false;
   tippeText($("#fehlerBeschreibung"),
     "Die Greifer-Halterung hat einen Haarriss und ist gebrochen — dafür gibt es kein Ersatzteil.");
-  // ~1,5s Tippdauer der FEHLER-Beschreibung + ~3s bewusstes Stehenlassen,
-  // bevor die Aufgabenfolie weiterspringt (Nutzer-Feedback: vorher kaum Zeit
-  // zum Lesen). Siehe TODO.md.
-  setTimeout(() => {
+  // Kein automatisches Weiterspringen mehr (Nutzer-Feedback: man soll die
+  // FEHLER-Meldung in Ruhe lesen koennen) - stattdessen ein eigener
+  // "Weiter"-Button direkt im Kasten. Siehe TODO.md.
+  $("#fehlerWeiterBtn").onclick = () => {
     zeigeAufgabenfolie(3, () => {
       $("#zwillingSzene").hidden = true;
       $("#messpunkte").hidden = false;
       anforderungenZeichnen();
     }, "Nimm nun die technischen Anforderungen am Bauteil auf.");
-  }, 4500);
+  };
 }
 $("#zwillingszene-wrap").addEventListener("click", e => zwillingKlick(e.target.closest(".hotspot")));
 $("#zwillingszene-wrap").addEventListener("keydown", e => {
