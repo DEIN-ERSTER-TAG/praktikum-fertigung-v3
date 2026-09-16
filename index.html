@@ -303,6 +303,14 @@
     background: var(--weiss); border: 1px solid var(--tinte); border-radius: 999px;
     padding: 9px 15px; cursor: pointer;
   }
+  /* Antwort-Chips im Chat: gleich grosses Format statt an die jeweilige
+     Textlaenge angepasster Breite/Hoehe - Nutzer-Feedback per Screenshot
+     (eine einzeilige Antwort sah neben zwei zweizeiligen unpassend aus). */
+  .chat-antworten { flex-direction: column; }
+  .chat-antworten .pille {
+    width: 100%; box-sizing: border-box; min-height: 58px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
   .pille:hover:not(:disabled) { background: var(--tinte); color: #fff; }
   .pille:disabled { opacity: .32; cursor: default; }
   .pille.treffer { background: var(--gruen); border-color: var(--gruen); color: #fff; }
@@ -330,10 +338,15 @@
   .zwillingablesung b { color: var(--tinte); }
   /* Deutlich sichtbarer Treffer-Hinweis, damit der Fund am Zwilling nicht im
      kleingedruckten Soll/Ist-Text untergeht (Nutzer-Feedback: Screen wirkte
-     zu kurz/unklar nach dem richtigen Klick). */
+     zu kurz/unklar nach dem richtigen Klick). Liegt jetzt als Overlay ueber
+     dem unteren Rand der Zwilling-Szene statt darunter im normalen Fluss zu
+     stehen (weiteres Nutzer-Feedback) - .zwilling-stage ist der positionierte
+     Rahmen dafuer. */
+  .zwilling-stage { position: relative; }
   .fehler-gefunden {
-    margin-top: 14px; padding: 14px 16px; border: 2px solid #C03A57; border-radius: 10px;
-    background: rgba(192,58,87,.06);
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 14px 16px; border: 2px solid #C03A57; border-radius: 0 0 12px 12px;
+    background: rgba(255,255,255,.97);
   }
   .fehler-titel { margin: 0 0 6px; font-size: 1.1rem; font-weight: 900; letter-spacing: .04em; color: #C03A57; }
   .fehler-gefunden p:not(.fehler-titel) { margin: 0; font-size: .92rem; color: var(--tinte); min-height: 1.3em; }
@@ -643,12 +656,14 @@
             <span>Systemdruck <b id="zwLiveB">4.1 bar</b></span>
             <span>Temperatur <b id="zwLiveC">21 °C</b></span>
           </div>
-          <div class="zwilling-wrap" id="zwillingszene-wrap"></div>
-          <p class="zwillingablesung" id="zwillingablesung">Tippe eine markierte Stelle an der Anlage an.</p>
-          <div class="fehler-gefunden" id="fehlerGefunden" hidden aria-live="polite">
-            <p class="fehler-titel">FEHLER</p>
-            <p id="fehlerBeschreibung"></p>
+          <div class="zwilling-stage">
+            <div class="zwilling-wrap" id="zwillingszene-wrap"></div>
+            <div class="fehler-gefunden" id="fehlerGefunden" hidden aria-live="polite">
+              <p class="fehler-titel">FEHLER</p>
+              <p id="fehlerBeschreibung"></p>
+            </div>
           </div>
+          <p class="zwillingablesung" id="zwillingablesung"></p>
         </div>
         <div id="messpunkte" hidden></div>
       </div>
@@ -951,7 +966,7 @@ function mitteilungZeigen(von, vorschau, ziel) {
    Swipe nach rechts weggewischt - beides muss gehen, reine Wisch-Gesten ohne
    Alternative waeren ein WCAG-2.5.7-Verstoss (Pointer Gestures). */
 const AUFGABENFOLIEN = {
-  2: "Kurz darauf meldet sich Lena bei dir.",
+  2: "Kurz darauf meldet sich deine Kollegin Lena bei dir. Sie ist Mechatronikerin bei uns.",
   3: "Finde am digitalen Zwilling heraus, welches Bauteil kaputt ist. Lena begleitet dich per Chat.",
   4: "Plane das Ersatzteil am Computer (CAD) — Schritt für Schritt geht's dann zur Fertigung.",
   5: "Lena ist los — bring nun die letzten Schritte in die richtige Reihenfolge."
@@ -1077,7 +1092,7 @@ function anrufBeenden() {
     if (schritt() < 2) {
       zeigeAufgabenfolie(2, () => {
         setzeZustand("mail");
-        mitteilungZeigen("Lena", "Hey, Hr. Schmidtke von ZISCH hat versucht mich zu erreichen …", "chat");
+        mitteilungZeigen("Lena", "Hey, Hr. Schmidtke von ZISCH hat versucht mich zu erreichen. Konnte nicht rangehen. Was wollte er?", "chat");
       });
     }
   }, 1800);
@@ -1175,13 +1190,17 @@ const LENA_ANTWORTEN = {
   schenken: "Er wollte uns 100 Kästen Limonade schenken, einfach so."
 };
 
-/* Chips bleiben nach einer falschen Antwort erneut anklickbar (kein
-   Fortschrittsverlust, kein Deaktivieren) - man darf mehrere Scherzantworten
-   nacheinander probieren, bevor man die richtige waehlt. */
+/* Bereits gewaehlte Antworten verschwinden aus der Liste (kein erneutes
+   Anbieten derselben Option) - nach zwei falschen Antworten bleibt nur noch
+   die richtige uebrig. Nutzer-Feedback per Screenshot: vorher blieben alle
+   drei Chips immer bestehen, auch schon Probiertes. Siehe TODO.md. */
+const antwortVersucht = new Set();
+
 function zeigeAntwortOptionen() {
   const div = document.createElement("div");
   div.className = "pillen chat-antworten";
   div.innerHTML = Object.entries(LENA_ANTWORTEN)
+    .filter(([id]) => !antwortVersucht.has(id))
     .map(([id, text]) => `<button class="pille" type="button" data-antwort="${id}">${text}</button>`).join("");
   $("#verlauf").appendChild(div);
   div.scrollIntoView({block: "nearest"});
@@ -1193,20 +1212,27 @@ function zeigeAntwortOptionen() {
 }
 
 function lenaAntwortWaehlen(id, div) {
+  antwortVersucht.add(id);
   ichSage(LENA_ANTWORTEN[id]);
   div.remove();
   tippt(() => {
     if (id === "kaputt") {
       sagt("Ok, das müssen wir uns direkt gemeinsam anschauen. Am besten am digitalen Zwilling. " +
            "Ach, kennst du vermutlich noch nicht. Zu viel zu tippen. Ich nehme kurz eine Sprachnachricht auf.");
-      setTimeout(() => {
+      // 5s statt vorher 900ms: Nutzer-Feedback - Zeit, die vorige Nachricht
+      // zu lesen, bevor die Sprachnachricht mit ihren Untertiteln loslegt.
+      // Der Tipp-Indikator (dieselbe Drei-Punkte-Animation wie sonst auch)
+      // macht die Wartezeit als "sie nimmt gerade auf" sichtbar statt als
+      // stille Pause. Siehe TODO.md.
+      tippt(() => {
         sprachnachricht(LENA_ZWILLING_UNTERTITEL, "lenaZwillingAudio", LENA_ZWILLING_ENDE_MS, () => {
           zeigeAufgabenfolie(3, () => {
             setzeZustand("gefragt");
             oeffne("zwilling");
+            leiste("#leiste-zwilling", EXPERTIN, "Tippe eine markierte Stelle an der Anlage an.");
           });
         });
-      }, 900);
+      }, 5000);
       return;
     }
     if (id === "verwaehlt") {
@@ -1475,13 +1501,16 @@ function zwillingKlick(k) {
   $("#fehlerGefunden").hidden = false;
   tippeText($("#fehlerBeschreibung"),
     "Die Greifer-Halterung hat einen Haarriss und ist gebrochen — dafür gibt es kein Ersatzteil.");
+  // ~1,5s Tippdauer der FEHLER-Beschreibung + ~3s bewusstes Stehenlassen,
+  // bevor die Aufgabenfolie weiterspringt (Nutzer-Feedback: vorher kaum Zeit
+  // zum Lesen). Siehe TODO.md.
   setTimeout(() => {
     zeigeAufgabenfolie(3, () => {
       $("#zwillingSzene").hidden = true;
       $("#messpunkte").hidden = false;
       anforderungenZeichnen();
     }, "Nimm nun die technischen Anforderungen am Bauteil auf.");
-  }, 2600);
+  }, 4500);
 }
 $("#zwillingszene-wrap").addEventListener("click", e => zwillingKlick(e.target.closest(".hotspot")));
 $("#zwillingszene-wrap").addEventListener("keydown", e => {
