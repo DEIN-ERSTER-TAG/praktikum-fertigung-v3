@@ -680,8 +680,6 @@
       <div class="app-kopf">Reihenfolge · heute bei ZISCH <span class="logoklein"></span></div>
       <div class="auftragsleiste" id="leiste-plan" hidden></div>
       <div class="inhalt">
-        <p class="tagkopf">Einsatz beim Kunden <b>ZISCH Getränke GmbH</b></p>
-        <p class="frage">In welcher Reihenfolge macht ihr das?</p>
         <div class="pillen" id="reihenfolgeKarten"></div>
         <div class="packliste" id="reihenfolgeListe"></div>
       </div>
@@ -1388,26 +1386,6 @@ const ANFORDERUNGEN = [
 const anforderungenErfasst = [];
 let messungTimer = null;
 
-/* Kleine Skizze des Bauteils, das gerade gemessen wird - dieselbe Kontur wie
-   spaeter im CAD-Wireframe (Wiedererkennung), aber ohne Slider-Skalierung:
-   nur die jeweils betroffene Stelle ist hervorgehoben, macht nachvollziehbar,
-   WAS da gerade vermessen wird statt nur wozu ein Text-Button zu lesen.
-   Siehe TODO.md. */
-function bauteilSkizzeSVG(hervorhebung) {
-  return `
-    <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
-    <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-    ${hervorhebung === "wandstaerke" ? `<rect x="20" y="16" width="9" height="34" fill="#009999" opacity=".4"/>` : ""}
-    <circle cx="60" cy="33" r="8" fill="none"
-      stroke="${hervorhebung === "bohrung" ? "#009999" : "var(--linie)"}"
-      stroke-width="${hervorhebung === "bohrung" ? 2.4 : 1.4}" ${hervorhebung === "bohrung" ? "" : 'stroke-dasharray="2 2"'}/>
-    ${hervorhebung === "durchmesser" ? `
-      <line x1="20" y1="60" x2="100" y2="60" stroke="#009999" stroke-width="1.6"/>
-      <line x1="20" y1="56" x2="20" y2="64" stroke="#009999" stroke-width="1.6"/>
-      <line x1="100" y1="56" x2="100" y2="64" stroke="#009999" stroke-width="1.6"/>` : ""}
-  `;
-}
-
 /* Messschieber-Grafik fuer Durchmesser (Aussenbacken, umschliessen den
    Block) und Bohrungsmass (Innenmessschnaebel, spreizen sich in der
    Bohrung auf) - derselbe Werkzeugtyp, nur die andere Seite. Der
@@ -1474,14 +1452,7 @@ function anforderungenZeichnen() {
   const index = anforderungenErfasst.length;
   const naechste = ANFORDERUNGEN[index];
   box.innerHTML = `
-    <p class="frage">Nimm die technischen Anforderungen auf</p>
-    ${naechste ? `<div id="messWerkzeugFlaeche"></div>` : ""}
-    <div class="packliste">
-      <div class="zaehler ${naechste ? "" : "voll"}">Anforderungen: ${anforderungenErfasst.length} von ${ANFORDERUNGEN.length}</div>
-      ${anforderungenErfasst.length
-        ? `<ul>${anforderungenErfasst.map(a => `<li>${a.label}: ${a.wert}</li>`).join("")}</ul>`
-        : `<p class="leer">Noch nichts erfasst.</p>`}
-    </div>`;
+    ${naechste ? `<div id="messWerkzeugFlaeche"></div>` : ""}`;
   if (naechste) {
     zeigeMessWerkzeug(naechste);
     leiste("#leiste-zwilling", EXPERTIN, anforderungAnsage(naechste, index), "gut");
@@ -1528,12 +1499,8 @@ function zeigeMessWerkzeug(a) {
    zuspringen - dieselbe Anzeige fuer beide Werkzeuge (Caliper-Uebernehmen
    und Sonden-Fortschritt enden hier gemeinsam). Siehe TODO.md. */
 function messErgebnisZeigen(a) {
-  $("#messpunkte").innerHTML = `
-    <p class="frage">Nimm die technischen Anforderungen auf</p>
-    <div class="fertigung-karte">
-      ${bild(bauteilSkizzeSVG(a.id))}
-      <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>
-    </div>`;
+  $("#messWerkzeugFlaeche").innerHTML = `
+    <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>`;
   setTimeout(() => {
     anforderungenErfasst.push(a);
     anforderungenZeichnen();
@@ -1546,13 +1513,9 @@ function messErgebnisZeigen(a) {
    mit fixer Dauer. Nur noch fuer die Sonde (Wandstaerke) im Einsatz, der
    Caliper (Durchmesser/Bohrung) bestaetigt direkt per Slider. */
 function messungSimulieren(a) {
-  $("#messpunkte").innerHTML = `
-    <p class="frage">Nimm die technischen Anforderungen auf</p>
-    <div class="fertigung-karte">
-      ${bild(sondeSVG())}
-      <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
-      <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>
-    </div>`;
+  $("#messWerkzeugFlaeche").innerHTML = `
+    <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
+    <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>`;
   let prozent = 0;
   clearInterval(messungTimer);
   messungTimer = setInterval(() => {
