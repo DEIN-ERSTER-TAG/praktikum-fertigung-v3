@@ -681,7 +681,7 @@
       <div class="auftragsleiste" id="leiste-plan" hidden></div>
       <div class="inhalt">
         <p class="tagkopf">Einsatz beim Kunden <b>ZISCH Getränke GmbH</b></p>
-        <p class="frage" id="reihenfolgeFrage">In welcher Reihenfolge macht ihr das?</p>
+        <p class="frage">In welcher Reihenfolge macht ihr das?</p>
         <div class="pillen" id="reihenfolgeKarten"></div>
         <div class="packliste" id="reihenfolgeListe"></div>
       </div>
@@ -689,17 +689,13 @@
 
     <!-- Abschluss -->
     <div class="app-flaeche" id="app-nadine" hidden>
-      <div class="app-kopf">Sabine · Personalabteilung <span class="logoklein"></span></div>
+      <div class="app-kopf">Lena · Mechatronikerin <span class="logoklein"></span></div>
       <div class="inhalt">
         <div class="geschafft">✓ Geschafft — das Ersatzteil sitzt</div>
         <div class="blase">
-          <div class="wer">Sabine</div>
-          Hab gerade den ganzen Vorgang gesehen — <b>das hast du toll gemacht</b>, wie du den
-          Notfall mit dem Greifarm bei ZISCH gelöst hast! Du hast das kaputte Bauteil analysiert,
-          die Maße aufgenommen, ein CAD-Modell konstruiert, den Prototyp gedruckt und getestet,
-          das Ersatzteil gefräst und am Ende alles eingebaut und dokumentiert. Schau doch mal auf
-          unserer Website, ob ein
-          Schülerpraktikum oder eine Ausbildung für dich in Frage kommt.
+          <div class="wer">Lena</div>
+          <b>Das hast du echt gut gemacht.</b> Das hier war ja nur eine Simulation und ich bin
+          nicht echt. Aber schau dir doch gerne mal deine Einstiegsmöglichkeiten bei SIEMENS an.
         </div>
         <div class="wege">
           <a class="cta" href="https://www.ausbildung.siemens.com/schuelerpraktikum" target="_blank" rel="noopener">Schülerpraktikum</a>
@@ -915,6 +911,11 @@ function audioEntsperren() {
 
 $("#losGehts").addEventListener("click", () => {
   $("#einstieg").hidden = true;
+  // Bugfix: #start ist seit dem Startscreen-Umbau per Default versteckt
+  // (vorher war das nie noetig). Ohne dieses explizite Einblenden blieb der
+  // Bildschirm in der Pause vor dem Anruf komplett schwarz statt kurz den
+  // Homescreen zu zeigen. Siehe TODO.md.
+  $("#start").hidden = false;
   audioEntsperren();
   // Kurz der Homescreen, dann kommt der Anruf direkt rein - kein Umweg
   // ueber die Mitteilungs-Banner nur fuer diesen allerersten Einstieg.
@@ -965,7 +966,7 @@ const AUFGABENFOLIEN = {
   2: "Kurz darauf meldet sich deine Kollegin Lena bei dir. Sie ist Mechatronikerin bei uns.",
   3: "Finde am digitalen Zwilling heraus, welches Bauteil kaputt ist. Lena begleitet dich per Chat.",
   4: "Plane das Ersatzteil am Computer (CAD) — Schritt für Schritt geht's dann zur Fertigung.",
-  5: "Lena ist los — bring nun die letzten Schritte in die richtige Reihenfolge."
+  5: "Zum Abschluss planst du nun den Einsatz vor Ort beim Kunden."
 };
 let aufgabenfolieWeiter = null;
 
@@ -1088,6 +1089,13 @@ function anrufBeenden() {
     if (schritt() < 2) {
       zeigeAufgabenfolie(2, () => {
         setzeZustand("mail");
+        // Bugfix: derselbe #start-Sichtbarkeits-Bug wie oben - ohne dieses
+        // Einblenden landete man in einer Sackgasse (schwarzer Screen),
+        // falls die Mitteilung nicht rechtzeitig angetippt wurde, bevor sie
+        // nach 7s von selbst verschwindet. Jetzt liegt darunter der
+        // Homescreen mit einem antippbaren Chat-Icon, das denselben Weg
+        // oeffnet. Siehe TODO.md.
+        $("#start").hidden = false;
         mitteilungZeigen("Lena", "Hey, Hr. Schmidtke von ZISCH hat versucht mich zu erreichen. Konnte nicht rangehen. Was wollte er?", "chat");
       });
     }
@@ -1407,13 +1415,20 @@ function bauteilSkizzeSVG(hervorhebung) {
    man das wirklich". Siehe TODO.md. */
 function caliperSVG(wert, a) {
   const [min, max] = a.bereich;
-  const frac = (wert - min) / (max - min);
-  const gap = 24 + frac * 56;
+  const zumGap = w => 24 + ((w - min) / (max - min)) * 56;
+  const gap = zumGap(wert);
+  // Bauteil-Groesse ist FEST (das Bauteil hat ja eine echte, unveraenderliche
+  // Groesse) und richtet sich nach dem Zielwert, nicht nach dem aktuellen
+  // Schieberwert - sonst "waechst" das Bauteil beim Ziehen einfach mit und
+  // die Backen beruehren es nie wirklich. Nutzer-Feedback per Screenshot:
+  // bei korrektem Messwert klaffte trotzdem eine Luecke. Siehe TODO.md.
+  const zielGap = zumGap(a.ziel);
   const mitte = 60;
   const linksX = mitte - gap / 2, rechtsX = mitte + gap / 2;
   if (a.id === "bohrung") {
+    const radius = zielGap / 2;
     return `
-      <circle cx="${mitte}" cy="38" r="30" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+      <circle cx="${mitte}" cy="38" r="${radius.toFixed(1)}" fill="none" stroke="#8A8AA3" stroke-width="2"/>
       <rect x="${mitte - 3}" y="6" width="6" height="30" fill="#4A5C6E"/>
       <path d="M${linksX} 38 L${mitte - 3} 30 M${linksX} 38 L${mitte - 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
       <path d="M${rechtsX} 38 L${mitte + 3} 30 M${rechtsX} 38 L${mitte + 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
@@ -1422,7 +1437,7 @@ function caliperSVG(wert, a) {
     `;
   }
   return `
-    <rect x="${mitte - 14}" y="26" width="28" height="24" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <rect x="${(mitte - zielGap / 2).toFixed(1)}" y="26" width="${zielGap.toFixed(1)}" height="24" fill="none" stroke="#8A8AA3" stroke-width="2"/>
     <line x1="10" y1="58" x2="110" y2="58" stroke="#4A5C6E" stroke-width="3"/>
     <rect x="${linksX - 4}" y="20" width="6" height="42" rx="2" fill="#009999"/>
     <rect x="${rechtsX - 2}" y="20" width="6" height="42" rx="2" fill="#009999"/>
@@ -1849,9 +1864,6 @@ const REIHENFOLGE_FRAGEN = [
 
 function reihenfolgeZeichnen() {
   const offen = REIHENFOLGE_ANZEIGE.filter(r => !reihenfolgeErledigt.includes(r));
-  $("#reihenfolgeFrage").textContent = offen.length
-    ? (REIHENFOLGE_FRAGEN[reihenfolgeErledigt.length] || "Was kommt als nächstes?")
-    : "Alles einsortiert.";
   $("#reihenfolgeKarten").innerHTML = offen.map(r => `
     <button class="pille" type="button" data-id="${r.id}">${r.label}</button>
   `).join("");
@@ -1861,6 +1873,13 @@ function reihenfolgeZeichnen() {
     (reihenfolgeErledigt.length
       ? `<ul>${reihenfolgeErledigt.map((r, i) => `<li>${i + 1}. ${r.label}</li>`).join("")}</ul>`
       : `<p class="leer">Noch nichts einsortiert.</p>`);
+  // Lena begleitet auch hier per Chat statt einer stillen Ueberschrift -
+  // dieselbe Ansage wandert oben in die Leiste, wie bei den anderen
+  // Screens. Ueberschrieben wird das direkt danach von "Richtig!" im
+  // Klick-Handler, sobald eine Antwort gewaehlt wurde. Siehe TODO.md.
+  if (offen.length) {
+    leiste("#leiste-plan", EXPERTIN, REIHENFOLGE_FRAGEN[reihenfolgeErledigt.length] || "Was kommt als nächstes?", "gut");
+  }
 }
 reihenfolgeZeichnen();
 
@@ -1883,7 +1902,7 @@ $("#reihenfolgeKarten").addEventListener("click", e => {
          "Genau so: erst einbauen, dann in Betrieb nehmen, testen und dokumentieren.", "gut");
   setzeZustand("fertig");
   setTimeout(() => {
-    mitteilungZeigen("Sabine Kessler", "Hab gerade gesehen, wie ihr das sortiert habt …", "nadine");
+    mitteilungZeigen("Lena", "Hab gerade gesehen, wie ihr das sortiert habt …", "nadine");
   }, 3200);
 });
 
