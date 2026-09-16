@@ -1759,12 +1759,20 @@ $("#reihenfolgeKarten").addEventListener("click", e => {
 function devAufraeumen() {
   $("#einstieg").hidden = true;
   $("#anrufscreen").hidden = true;
+  $("#anrufscreen").classList.remove("klingelt");
   $("#mitteilung").style.display = "none";
   $("#aufgabenfolie").hidden = true;
   $("#start").hidden = true;
   clearInterval(messungTimer);
   clearInterval(druckTimer);
   clearInterval(fraesFrameTimer);
+  // Bug-Fix: der Klingelton lief beim Wegspringen von "Anruf" (ohne auf
+  // Annehmen zu klicken) im Hintergrund einfach weiter, weil nur der
+  // Annehmen-Handler ihn stoppte. Jetzt stoppt jeder Dev-Sprung ihn zuerst.
+  // Siehe TODO.md.
+  const klingelton = $("#klingeltonAudio");
+  klingelton.pause();
+  klingelton.currentTime = 0;
 }
 
 const DEVMENU_ZIELE = {
