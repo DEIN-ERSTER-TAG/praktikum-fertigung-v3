@@ -474,6 +474,27 @@
 
   [hidden] { display: none !important; }
 
+  /* Dev-Sprungmenue: bewusst optisch abgesetzt (dunkel, Monospace) von der
+     eigentlichen App-Optik, damit sofort klar ist, dass es kein Teil des
+     Spiels fuer Praktikant*innen ist, sondern ein Test-/Review-Werkzeug. */
+  .devmenu { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); z-index: 999; }
+  .devmenu-toggle {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid #444;
+    background: rgba(20,20,20,.85); color: #fff; font-size: 1rem; cursor: pointer;
+  }
+  .devmenu-liste {
+    margin-top: 6px; background: rgba(20,20,20,.94); border-radius: 10px; padding: 8px;
+    display: flex; flex-direction: column; gap: 4px; width: 130px;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+  .devmenu-titel { margin: 0 2px 2px; font-size: .64rem; color: #999; text-transform: uppercase; letter-spacing: .05em; }
+  .devmenu-liste button {
+    font: inherit; font-size: .74rem; text-align: left; background: #2a2a2a; color: #ddd;
+    border: none; border-radius: 6px; padding: 6px 8px; cursor: pointer;
+  }
+  .devmenu-liste button:hover { background: var(--orange); color: #fff; }
+  .devmenu-toggle:focus-visible, .devmenu-liste button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
   @media (max-width: 700px) {
     body { padding-top: 64px; }
     .geraet { --breit: min(330px, 86vw, 68vh * 0.462); }
@@ -689,6 +710,27 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Dev-Sprungmenue: reine Test-/Review-Hilfe, kein Teil des Spiels selbst.
+     Steht bewusst ausserhalb von .geraet, damit es am echten Bildschirmrand
+     sitzt statt im Handy-Rahmen gequetscht zu werden. -->
+<div class="devmenu" id="devmenu">
+  <button class="devmenu-toggle" id="devmenuToggle" type="button" aria-expanded="false"
+          aria-controls="devmenuListe" aria-label="Test-Sprungmenü öffnen">🛠️</button>
+  <div class="devmenu-liste" id="devmenuListe" hidden>
+    <p class="devmenu-titel">Test-Sprung</p>
+    <button type="button" data-ziel="start">Start</button>
+    <button type="button" data-ziel="anruf">Anruf</button>
+    <button type="button" data-ziel="team">Team</button>
+    <button type="button" data-ziel="zwilling">Zwilling</button>
+    <button type="button" data-ziel="anforderungen">Anforderungen</button>
+    <button type="button" data-ziel="cad">CAD</button>
+    <button type="button" data-ziel="druck">3D-Druck</button>
+    <button type="button" data-ziel="fraesen">Fräsen</button>
+    <button type="button" data-ziel="reihenfolge">Reihenfolge</button>
+    <button type="button" data-ziel="ende">Ende</button>
   </div>
 </div>
 
@@ -1706,6 +1748,86 @@ $("#reihenfolgeKarten").addEventListener("click", e => {
   setTimeout(() => {
     mitteilungZeigen("Sabine Kessler", "Hab gerade gesehen, wie ihr das sortiert habt …", "nadine");
   }, 3200);
+});
+
+/* ---------- Dev-Sprungmenue ----------
+   Reine Test-/Review-Hilfe, kein Teil des eigentlichen Spiels: erlaubt
+   gezieltes Anspringen einzelner Screens statt jedes Mal von vorn
+   durchspielen zu muessen. Setzt denselben internen Zustand wie die echten
+   Uebergaenge und ruft dieselben Zeichenfunktionen auf, statt eigene
+   Anzeige-Logik zu duplizieren. Siehe TODO.md. */
+function devAufraeumen() {
+  $("#einstieg").hidden = true;
+  $("#anrufscreen").hidden = true;
+  $("#mitteilung").style.display = "none";
+  $("#aufgabenfolie").hidden = true;
+  $("#start").hidden = true;
+  clearInterval(messungTimer);
+  clearInterval(druckTimer);
+  clearInterval(fraesFrameTimer);
+}
+
+const DEVMENU_ZIELE = {
+  start() { location.reload(); },
+  anruf() { devAufraeumen(); anrufOeffnen(); },
+  team() { devAufraeumen(); setzeZustand("liste"); oeffne("team"); },
+  zwilling() {
+    devAufraeumen();
+    document.querySelectorAll(".hotspot.geprueft").forEach(el => el.classList.remove("geprueft", "richtig", "falsch"));
+    $("#zwillingablesung").textContent = "Tippe eine markierte Stelle an der Anlage an.";
+    $("#fehlerGefunden").hidden = true;
+    $("#zwillingSzene").hidden = false;
+    $("#messpunkte").hidden = true;
+    setzeZustand("zwilling"); oeffne("zwilling");
+  },
+  anforderungen() {
+    devAufraeumen();
+    anforderungenErfasst.length = 0;
+    $("#zwillingSzene").hidden = true;
+    $("#messpunkte").hidden = false;
+    setzeZustand("gefragt"); oeffne("zwilling");
+    anforderungenZeichnen();
+  },
+  cad() {
+    devAufraeumen();
+    cadUebernommen.length = 0;
+    cadLiveWert.durchmesser = null; cadLiveWert.bohrung = null; cadLiveWert.wandstaerke = null;
+    fertigungStufe = "cad";
+    setzeZustand("geraete"); oeffne("geraete");
+    fertigungZeichnen();
+  },
+  druck() {
+    devAufraeumen();
+    fertigungStufe = "druck";
+    setzeZustand("geraete"); oeffne("geraete");
+    fertigungZeichnen();
+  },
+  fraesen() {
+    devAufraeumen();
+    fertigungStufe = "fraesen";
+    setzeZustand("geraete"); oeffne("geraete");
+    fertigungZeichnen();
+  },
+  reihenfolge() {
+    devAufraeumen();
+    reihenfolgeErledigt.length = 0;
+    setzeZustand("plan"); oeffne("tagesplan");
+    reihenfolgeZeichnen();
+  },
+  ende() { devAufraeumen(); oeffne("nadine"); }
+};
+
+$("#devmenuToggle").addEventListener("click", () => {
+  const liste = $("#devmenuListe");
+  const offen = liste.hidden;
+  liste.hidden = !offen;
+  $("#devmenuToggle").setAttribute("aria-expanded", String(offen));
+});
+$("#devmenuListe").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-ziel]");
+  if (!btn) return;
+  const fn = DEVMENU_ZIELE[btn.dataset.ziel];
+  if (fn) fn();
 });
 </script>
 </body>
