@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Das 10-Minuten-Praktikum — Mechatroniker*in bei Siemens (Fertigung, Prototyp)</title>
+<script>
+  // Wenn diese Seite in ein iframe eingebettet ist (z.B. auf der Sales-Seite
+  // "Für Unternehmen"), soll das Handy-Mockup den verfuegbaren Platz moeglichst
+  // vollstaendig ausfuellen statt wie im eigenstaendigen Demo-Link (--breit
+  // orientiert sich dort an 36vw/86vw fuer ein Layout mit Luft drumherum).
+  // Betrifft NUR die eingebettete Darstellung - der direkt verschickte
+  // Demo-Link bleibt unveraendert.
+  if (window.self !== window.top) {
+    document.documentElement.classList.add("eingebettet");
+  }
+</script>
 <style>
   /* ---------- Typografie von DEIN ERSTER TAG ----------
      Obviously fuer Ueberschriften, Roboto fuer Text. Obviously liegt
@@ -113,6 +124,11 @@
   }
   .einstieg .los.da { opacity: 1; }
   .einstieg .los:hover { background: var(--orange-dunkel); }
+  .einstieg .ton-hinweis {
+    font-size: .78rem; color: var(--tinte-weich); margin: 10px 0 0;
+    opacity: 0; transition: opacity .5s;
+  }
+  .einstieg .ton-hinweis.da { opacity: 1; }
 
   /* ---------- Gerät ---------- */
   /* Die Breite fuehrt, die Hoehe folgt dem Seitenverhaeltnis. Nur so weiss das
@@ -137,48 +153,6 @@
     color: #fff; font-size: .76rem; font-weight: 700;
   }
   .status .rechts { margin-left: auto; letter-spacing: .06em; }
-
-  /* ---------- Startbildschirm ---------- */
-  .start {
-    flex: 1; display: flex; flex-direction: column; padding: 16px 18px 18px;
-    background: linear-gradient(165deg, #3B5C7A 0%, #23384C 55%, #182634 100%);
-  }
-  .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 14px; }
-  .app {
-    display: block; width: 100%; font: inherit; background: none; border: none;
-    padding: 0; text-align: center; color: #fff; cursor: pointer;
-  }
-  .symbol {
-    width: 100%; aspect-ratio: 1; border-radius: 16px; display: flex;
-    align-items: center; justify-content: center; font-size: 1.45rem;
-    background: rgba(255,255,255,.14);
-  }
-  .app small { display: block; font-size: .6rem; margin-top: 5px; opacity: .85; }
-  .dock {
-    margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px;
-    background: rgba(255,255,255,.1); border-radius: 22px; padding: 10px;
-  }
-
-  .symbolhuelle { position: relative; display: block; }
-  .punkt {
-    position: absolute; top: -3px; right: -3px; width: 16px; height: 16px;
-    background: #E24E6E; color: #fff; border-radius: 50%; font-size: .6rem;
-    font-weight: 800; display: flex; align-items: center; justify-content: center;
-  }
-
-  /* ---------- Mitteilung ---------- */
-  .mitteilung {
-    position: absolute; left: 12px; right: 12px; top: 40px; z-index: 8;
-    background: rgba(255,255,255,.96); border-radius: 16px; padding: 12px 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35); cursor: grab;
-    transform: translateY(-190%); transition: transform .45s cubic-bezier(.2,.9,.3,1.2);
-    touch-action: none; user-select: none;
-  }
-  .mitteilung.da { transform: translateY(0); }
-  .mkopf { display: flex; align-items: center; gap: 7px; font-size: .7rem; color: var(--tinte-weich); font-weight: 700; }
-  .mkopf .zeit { margin-left: auto; font-weight: 500; }
-  .mvon { font-weight: 800; font-size: .92rem; margin-top: 4px; }
-  .mvorschau { font-size: .84rem; color: var(--tinte-weich); }
 
   /* ---------- App-Flächen ---------- */
   .app-flaeche { flex: 1; background: var(--weiss); display: flex; flex-direction: column; overflow: hidden; }
@@ -258,6 +232,12 @@
     background: rgba(255,255,255,.08); border-radius: 14px; padding: 14px;
     text-align: left;
   }
+  .anruf-pause {
+    margin-top: 14px; align-self: center; font: inherit; font-size: .84rem; font-weight: 700;
+    color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px; padding: 8px 20px; cursor: pointer; flex: none;
+  }
+  .anruf-pause:hover { background: rgba(255,255,255,.22); }
 
   /* Listen */
   .liste { display: flex; flex-direction: column; gap: 8px; }
@@ -313,6 +293,14 @@
   .pille:hover:not(:disabled) { background: var(--tinte); color: #fff; }
   .pille:disabled { opacity: .32; cursor: default; }
   .pille.treffer { background: var(--gruen); border-color: var(--gruen); color: #fff; }
+  /* Farbwahl beim 3D-Druck (Siemens-Feedback 17.09.2026, Punkt 6): ein
+     kleiner Farbpunkt vor dem Label, Farbe kommt als CSS-Variable pro
+     Button mit - kein Sonderfall im Markup noetig. */
+  .farb-pille { display: inline-flex; align-items: center; gap: 6px; }
+  .farb-pille::before {
+    content: ""; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--farbe); border: 1px solid rgba(0,0,0,.18); flex: none;
+  }
 
   /* Digitaler Zwilling: dunkle "Hologramm"-Szene mit antippbaren Messpunkten,
      statt der Text-Ankuendigungsliste aus dem Elektroniker-Original. */
@@ -392,6 +380,60 @@
   .packliste ul { margin: 7px 0 0; padding-left: 18px; }
   .packliste li { font-size: .92rem; line-height: 1.5; }
   .packliste .leer { margin: 6px 0 0; font-size: .88rem; color: var(--grau); }
+
+  /* ---------- Programmieren (ersetzt Reihenfolge) ---------- */
+  /* Scratch-artige Bloecke statt Pillen. Tippen bleibt die Hauptmechanik
+     (WCAG 2.5.1 - jede Zieh-Geste braucht eine Tipp-Alternative), Ziehen ist
+     eine zusaetzliche, rein visuelle Bonus-Interaktion obendrauf: beide Wege
+     rufen dieselbe Pruef-Funktion auf. Siehe TODO.md. */
+  .code-zaehler { font-size: .82rem; font-weight: 800; color: var(--grau); margin: 0 0 8px; }
+  .code-zaehler.voll { color: var(--gruen); }
+  /* Dunkler IDE-Hintergrund statt heller Karte - Nutzer-Feedback per
+     Screenshot: "sieht noch ueberhaupt nicht nach Coden aus". Zusammen mit
+     Monospace-Schrift und Funktions-Syntax auf den Bloecken (siehe
+     codeZeichnen()) soll das klarer nach Programmieren statt nach
+     allgemeinen Aufgaben-Kaertchen aussehen. Siehe TODO.md. */
+  .code-stapel {
+    min-height: 64px; border-radius: 12px; padding: 16px 16px 10px; margin-bottom: 16px;
+    background: #1E2530; border: 1px solid #2E3646;
+  }
+  .code-stapel .leer { margin: 6px 0; font-size: .86rem; color: #8A93A6; text-align: center; }
+  .code-block {
+    position: relative; display: block; width: 100%; box-sizing: border-box;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: .8rem; font-weight: 600; color: #fff; text-align: left;
+    background: #2E3646; border: none; border-radius: 7px; padding: 13px 14px;
+    cursor: grab; margin-bottom: 10px;
+    overflow-wrap: break-word;
+  }
+  .code-block:last-child { margin-bottom: 0; }
+  /* Nur die Tray-Bloecke sind ziehbar - die bereits gesetzten Stapel-Bloecke
+     sind nicht interaktiv und brauchen touch-action:none nicht, das sonst
+     unnoetig das Scrollen ueber sie erschweren wuerde. */
+  #codeTray .code-block { touch-action: none; }
+  /* Puzzle-Steckverbindung im Stapel: ein Trapez in Blockfarbe statt eines
+     schlichten Punkts - steckt sichtbar im Block darueber, wie bei echten
+     Scratch-Bloecken. */
+  #codeStapel .code-block { background: var(--gruen); cursor: default; }
+  #codeStapel .code-block:not(:first-child)::before {
+    content: ""; position: absolute; top: -7px; left: 20px; width: 20px; height: 8px;
+    background: var(--gruen); clip-path: polygon(18% 100%, 82% 100%, 100% 0, 0 0);
+  }
+  @keyframes codeSnap {
+    0% { transform: scale(1.14); } 60% { transform: scale(.95); } 100% { transform: scale(1); }
+  }
+  @keyframes codeShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); } 40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); } 80% { transform: translateX(4px); }
+  }
+  /* Wie der Anruf-Puls (siehe .anrufscreen.klingelt weiter oben): Bewegung
+     nur, wenn das System sie nicht reduziert haben will. Siehe TODO.md. */
+  @media (prefers-reduced-motion: no-preference) {
+    .code-block.snap { animation: codeSnap .3s ease-out; }
+    .code-block.falsch { animation: codeShake .35s ease-in-out; }
+  }
+  .code-block.ziehen { cursor: grabbing; box-shadow: 0 6px 16px rgba(0,0,0,.3); z-index: 5; }
   .orderknopf {
     display: block; width: 100%; margin-top: 12px; font: inherit; font-size: .98rem;
     font-weight: 800; color: #fff; background: var(--orange); border: none;
@@ -419,6 +461,26 @@
   .cad-slider label { display: block; font-size: .84rem; color: var(--tinte-weich); margin-bottom: 8px; }
   .cad-slider label b { color: var(--tinte); }
   .cad-slider input[type="range"] { width: 100%; margin-bottom: 12px; accent-color: var(--orange); }
+  /* Fraes-Hebel: eigener Regler mit Hitzestrahl-Verlauf (rot-gruen-rot) statt
+     der einfarbigen Fuellung - Verlauf kommt per Inline-Style pro Aufruf
+     (haengt vom Zielwert ab), hier nur die Track-/Thumb-Form. Volles
+     appearance:none noetig, damit der eigene Hintergrund durchscheint statt
+     vom nativen Track ueberdeckt zu werden. */
+  .fraes-hebel {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 12px;
+    border-radius: 999px; margin-bottom: 12px; cursor: pointer;
+  }
+  .fraes-hebel::-webkit-slider-runnable-track { -webkit-appearance: none; height: 12px; border-radius: 999px; background: transparent; }
+  .fraes-hebel::-moz-range-track { height: 12px; border-radius: 999px; background: transparent; }
+  .fraes-hebel::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--tinte); margin-top: -5px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.35); cursor: pointer;
+  }
+  .fraes-hebel::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    border: 3px solid var(--tinte); box-shadow: 0 1px 4px rgba(0,0,0,.35); cursor: pointer;
+  }
 
   /* Reihenfolge (letzter Schritt): ersetzt den frueheren Uhrzeit-Kalender -
      die vier Schlussschritte haengen rein logisch zusammen, nicht an festen
@@ -507,6 +569,15 @@
     body { padding-top: 64px; }
     .geraet { --breit: min(330px, 86vw, 68vh * 0.462); }
   }
+
+  /* ---------- Eingebettete Darstellung (siehe Skript im <head>) ---------- */
+  html.eingebettet, html.eingebettet body { background: transparent; }
+  html.eingebettet body { padding: 0; }
+  html.eingebettet .geraet {
+    --breit: min(99vw, 99vh * 0.462);
+    box-shadow: none;
+  }
+  html.eingebettet .devmenu { display: none; }
 </style>
 </head>
 <body>
@@ -531,34 +602,7 @@
       <p id="e4"></p>
       <p id="e5"></p>
       <button class="los" id="losGehts" type="button">Los geht's</button>
-    </div>
-
-    <div class="start" id="start" hidden>
-      <div class="apps">
-        <button class="app" data-app="team" type="button"><span class="symbol">💬</span><small>Chat</small></button>
-        <button class="app" data-app="zwilling" type="button"><span class="symbol">🪞</span><small>Zwilling</small></button>
-        <button class="app" data-app="geraete" type="button"><span class="symbol">🧰</span><small>Fertigung</small></button>
-        <button class="app" data-app="tagesplan" type="button"><span class="symbol">🔢</span><small>Reihenfolge</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">🎵</span><small>Musik</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">📸</span><small>Kamera</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">🌤️</span><small>Wetter</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">🗺️</span><small>Karten</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">🎮</span><small>Spiele</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">🛒</span><small>Shop</small></button>
-        <button class="app" data-app="nix" type="button"><span class="symbol">⚙️</span><small>Einstell.</small></button>
-      </div>
-      <div class="dock">
-        <button class="app" data-app="nix" type="button" aria-label="Anrufen"><span class="symbol">📞</span></button>
-        <button class="app" data-app="nix" type="button" aria-label="Internet"><span class="symbol">🌐</span></button>
-        <button class="app" data-app="nix" type="button" aria-label="Dateien"><span class="symbol">📁</span></button>
-        <button class="app" data-app="nix" type="button" aria-label="Benachrichtigungen"><span class="symbol">🔔</span></button>
-      </div>
-    </div>
-
-    <div class="mitteilung" id="mitteilung" role="button" tabindex="0">
-      <div class="mkopf">📞 ANRUF <span class="zeit">jetzt</span></div>
-      <div class="mvon">Torsten Schmidtke</div>
-      <div class="mvorschau">ZISCH Getränke — eingehender Anruf</div>
+      <p class="ton-hinweis" id="tonHinweis">🎧 Höre den Ton am besten mit Kopfhörern.</p>
     </div>
 
     <!-- Eingehender Anruf: eigene Vollbild-Ebene ueber dem restlichen Handy-
@@ -582,6 +626,7 @@
       <div class="anruf-verbunden" id="anrufVerbunden" hidden>
         <p class="anruf-status" id="anrufStatus">Verbunden</p>
         <div class="anruf-untertitel" id="anrufUntertitel" aria-live="polite"></div>
+        <button class="anruf-pause" id="anrufPause" type="button">⏸ Pause</button>
       </div>
 
       <audio id="anrufAudio" preload="none">
@@ -675,13 +720,14 @@
       </div>
     </div>
 
-    <!-- Reihenfolge -->
+    <!-- Programmieren (ersetzt die fruehere Reihenfolge-Aufgabe) -->
     <div class="app-flaeche" id="app-tagesplan" hidden>
-      <div class="app-kopf">Reihenfolge · heute bei ZISCH <span class="logoklein"></span></div>
+      <div class="app-kopf">Programmieren · heute bei ZISCH <span class="logoklein"></span></div>
       <div class="auftragsleiste" id="leiste-plan" hidden></div>
       <div class="inhalt">
-        <div class="pillen" id="reihenfolgeKarten"></div>
-        <div class="packliste" id="reihenfolgeListe"></div>
+        <p class="code-zaehler" id="codeZaehler">Programm: 0 von 4 Blöcken</p>
+        <div class="code-stapel" id="codeStapel"><p class="leer">Tippe oder ziehe die Code-Blöcke hier rein.</p></div>
+        <div class="pillen" id="codeTray"></div>
       </div>
     </div>
 
@@ -729,7 +775,7 @@
     <button type="button" data-ziel="cad">CAD</button>
     <button type="button" data-ziel="druck">3D-Druck</button>
     <button type="button" data-ziel="fraesen">Fräsen</button>
-    <button type="button" data-ziel="reihenfolge">Reihenfolge</button>
+    <button type="button" data-ziel="reihenfolge">Programm</button>
     <button type="button" data-ziel="ende">Ende</button>
   </div>
 </div>
@@ -765,8 +811,8 @@ const ZUSTAND = {
   gerauftrag: {s: 4, titel: "Wie fertigst du das Ersatzteil?", text: "Tippe auf die Fertigungs-App und konstruiere mit Lena das Ersatzteil."},
   geraete: {s: 4, titel: "Wie fertigst du das Ersatzteil?", text: "Lena hat beschrieben, was ihr macht. Bestätige die nächsten Fertigungsschritte."},
   planauftrag: {s: 5, titel: "Bring die Schritte in Reihenfolge", text: "Lena ist weg — jetzt entscheidest du. Tippe auf Reihenfolge."},
-  plan:    {s: 5, titel: "Bring die Schritte in Reihenfolge", text: "Tippe die vier Schritte in der richtigen Reihenfolge an."},
-  fertig:  {s: 5, titel: "Du hast es gelöst", text: "Das Ersatzteil sitzt — und die Anlage läuft, bevor die Kolleg*innen abfüllen."}
+  plan:    {s: 5, titel: "Bring die Anlage per Code zum Laufen", text: "Setze die vier Programm-Blöcke in der richtigen Reihenfolge."},
+  fertig:  {s: 5, titel: "Du hast es gelöst", text: "Das Programm läuft — die Anlage ist wieder einsatzbereit, bevor die Kolleg*innen abfüllen."}
 };
 let zustand = "start";
 const schritt = () => ZUSTAND[zustand].s;
@@ -787,9 +833,20 @@ const APP_ZUSTAND = {team: "liste", zwilling: "zwilling", geraete: "geraete", ta
 /* Kein Umweg mehr ueber Homescreen + blinkendes Icon zum Selbst-Antippen -
    die Aufgabenfolie sagt an, was zu tun ist, und oeffne() fuehrt direkt in
    die passende App. Siehe TODO.md Punkt 12. */
+/* Der Homescreen war reine Deko und wurde als eigener Screen entfernt -
+   Nutzer-Feedback (Siemens): er wirkte wie echte Navigation, war es aber
+   nicht (Sackgassen beim Reingehen). Damit "Zurueck" im Chat trotzdem
+   funktioniert, merkt sich oeffne() die zuletzt sichtbare App. Siehe TODO.md. */
+let letzteApp = null;
 function oeffne(name) {
-  $("#start").hidden = true;
+  const sichtbar = APPS.find(a => !$("#app-" + a).hidden);
+  if (sichtbar && sichtbar !== "chat") letzteApp = sichtbar;
   APPS.forEach(a => $("#app-" + a).hidden = a !== name);
+  // Der Zurueck-Pfeil im Chat ist nur sinnvoll, wenn es ueberhaupt eine App
+  // gibt, zu der er zurueckfuehren kann (ueber die TEAM-Leiste geoeffnet).
+  // Direkt nach dem Anruf (noch keine App offen) macht er nichts - dann
+  // lieber gar nicht erst zeigen. Siehe TODO.md.
+  if (name === "chat") $("#chatZurueck").hidden = !letzteApp;
   if (name === "nadine" || name === "chat") return;
   const gehoert = APP_ZUSTAND[name];
   if (!gehoert) return;
@@ -809,17 +866,6 @@ function leiste(id, wer, text, klasse = "") {
   el.onclick = vonExpertin ? () => chatOeffnen(EXPERTIN) : null;
   setTimeout(() => el.classList.add("da"), 30);
 }
-
-document.querySelectorAll(".app").forEach(knopf => {
-  knopf.addEventListener("click", () => {
-    const app = knopf.dataset.app;
-    if (app === "nix") return;
-    // "team" fuehrt jetzt direkt zu Lenas Chat statt zu einer Kontaktliste -
-    // siehe TODO.md/Umbau "Lena schreibt direkt".
-    if (app === "team") { lenaChatOeffnen(); return; }
-    oeffne(app);
-  });
-});
 
 /* ---------- 1 — Mitteilung ---------- */
 /* Der Text baut sich auf, als tippte ihn jemand. Tags werden am Stueck
@@ -843,11 +889,12 @@ function alleszeigen() {
     $(wo).classList.remove("tippend");
   });
   $("#losGehts").classList.add("da");
+  $("#tonHinweis").classList.add("da");
 }
 
 function tippe(n) {
   if (uebersprungen) return;
-  if (n >= EINSTIEGSTEXT.length) { $("#losGehts").classList.add("da"); return; }
+  if (n >= EINSTIEGSTEXT.length) { $("#losGehts").classList.add("da"); $("#tonHinweis").classList.add("da"); return; }
   const [wo, text, tempo] = EINSTIEGSTEXT[n];
   const el = $(wo);
   el.classList.add("tippend");
@@ -909,51 +956,12 @@ function audioEntsperren() {
 
 $("#losGehts").addEventListener("click", () => {
   $("#einstieg").hidden = true;
-  // Bugfix: #start ist seit dem Startscreen-Umbau per Default versteckt
-  // (vorher war das nie noetig). Ohne dieses explizite Einblenden blieb der
-  // Bildschirm in der Pause vor dem Anruf komplett schwarz statt kurz den
-  // Homescreen zu zeigen. Siehe TODO.md.
-  $("#start").hidden = false;
   audioEntsperren();
-  // Kurz der Homescreen, dann kommt der Anruf direkt rein - kein Umweg
-  // ueber die Mitteilungs-Banner nur fuer diesen allerersten Einstieg.
-  setTimeout(() => {
-    setzeZustand("anruf");
-    anrufOeffnen();
-  }, 1500);
+  // Anruf kommt direkt, ohne Pause dazwischen - der schwarze Bildschirm in
+  // der Luecke wirkte wie ein Fehler. Siehe TODO.md.
+  setzeZustand("anruf");
+  anrufOeffnen();
 });
-
-let mitteilungsZiel = () => anrufOeffnen();
-let verstecktGleich = null, wegRaeumen = null;
-
-function mitteilungOeffnen() { mitteilungVerstecken(); mitteilungsZiel(); }
-function mitteilungVerstecken() {
-  clearTimeout(verstecktGleich);
-  $("#mitteilung").classList.remove("da");
-  wegRaeumen = setTimeout(() => { $("#mitteilung").style.display = "none"; }, 400);
-}
-/* Sie verschwindet nach sieben Sekunden von allein - wie auf einem echten
-   Handy. Sonst verdeckt eine Nachricht, die man nicht antippen will, dauerhaft
-   den Bildschirm. Die allererste bleibt liegen: sie ist der einzige Einstieg. */
-function mitteilungAnzeigen(bleibt = false) {
-  const m = $("#mitteilung");
-  clearTimeout(wegRaeumen);
-  m.style.display = "";
-  m.classList.remove("da");
-  setTimeout(() => m.classList.add("da"), 20);
-  clearTimeout(verstecktGleich);
-  if (!bleibt) verstecktGleich = setTimeout(mitteilungVerstecken, 7000);
-}
-
-function mitteilungZeigen(von, vorschau, ziel) {
-  if (!$("#app-chat").hidden && ziel === "chat") return;
-  const m = $("#mitteilung");
-  m.querySelector(".mkopf").innerHTML = '💬 TEAM <span class="zeit">jetzt</span>';
-  m.querySelector(".mvon").textContent = von;
-  m.querySelector(".mvorschau").textContent = vorschau;
-  mitteilungsZiel = ziel === "chat" ? () => lenaChatOeffnen() : () => oeffne(ziel);
-  mitteilungAnzeigen();
-}
 
 /* ---------- Aufgabenfolie ----------
    Vollbild-Zwischenscreen bei jedem der 5 Schritt-Wechsel, ersetzt die
@@ -964,7 +972,7 @@ const AUFGABENFOLIEN = {
   2: "Kurz darauf meldet sich deine Kollegin Lena bei dir. Sie ist Mechatronikerin bei uns.",
   3: "Finde am digitalen Zwilling heraus, welches Bauteil kaputt ist. Lena begleitet dich per Chat.",
   4: "Plane das Ersatzteil am Computer (CAD) — Schritt für Schritt geht's dann zur Fertigung.",
-  5: "Zum Abschluss planst du nun den Einsatz vor Ort beim Kunden."
+  5: "Zum Abschluss bringst du die Anlage beim Kunden per Code wieder zum Laufen."
 };
 let aufgabenfolieWeiter = null;
 
@@ -1043,7 +1051,6 @@ const LENA_ZWILLING_UNTERTITEL = [
 const LENA_ZWILLING_ENDE_MS = 22000;
 
 function anrufOeffnen() {
-  mitteilungVerstecken();
   $("#anrufscreen").hidden = false;
   $("#anrufscreen").classList.add("klingelt"); // pulsierender Ring um den Avatar, siehe CSS
   $("#anrufKlingelt").hidden = false;
@@ -1058,6 +1065,50 @@ $("#anrufAblehnen").addEventListener("click", () => {
   $("#anrufAblehnenHinweis").hidden = false;
 });
 
+/* Pausierbar statt fixer setTimeout-Kette: Nutzer-Feedback (Klassenraum-
+   Situation, viele Handys gleichzeitig) - ein Tick alle 100ms zaehlt
+   "logische" Anrufzeit hoch, die beim Pausieren einfach stehen bleibt. So
+   lassen sich Audio UND Untertitel gemeinsam anhalten und exakt an der
+   Stelle fortsetzen. Siehe TODO.md. */
+let anrufLogischeZeit = 0;
+let anrufLetzterTick = null;
+let anrufAusgegeben = 0;
+let anrufTickTimer = null;
+let anrufPausiert = false;
+
+function anrufTick() {
+  const jetzt = performance.now();
+  if (!anrufPausiert) anrufLogischeZeit += jetzt - anrufLetzterTick;
+  anrufLetzterTick = jetzt;
+  while (anrufAusgegeben < ANRUF_UNTERTITEL.length && ANRUF_UNTERTITEL[anrufAusgegeben].ab <= anrufLogischeZeit) {
+    const z = ANRUF_UNTERTITEL[anrufAusgegeben];
+    const feld = $("#anrufUntertitel");
+    feld.textContent += (z.ab === 0 ? "" : " ") + z.text;
+    feld.scrollTop = feld.scrollHeight; // automatisch mitlaufen statt selbst scrollen muessen
+    anrufAusgegeben++;
+  }
+  if (anrufLogischeZeit >= ANRUF_ENDE_MS) {
+    clearInterval(anrufTickTimer);
+    anrufBeenden();
+  }
+}
+
+function anrufPauseUmschalten() {
+  anrufPausiert = !anrufPausiert;
+  const audio = $("#anrufAudio");
+  if (anrufPausiert) {
+    audio.pause();
+    $("#anrufPause").textContent = "▶ Weiter";
+    $("#anrufStatus").textContent = "Pausiert";
+  } else {
+    audio.play().catch(() => {});
+    anrufLetzterTick = performance.now();
+    $("#anrufPause").textContent = "⏸ Pause";
+    $("#anrufStatus").textContent = "Verbunden";
+  }
+}
+$("#anrufPause").addEventListener("click", anrufPauseUmschalten);
+
 $("#anrufAnnehmen").addEventListener("click", () => {
   $("#anrufscreen").classList.remove("klingelt");
   $("#anrufKlingelt").hidden = true;
@@ -1067,17 +1118,16 @@ $("#anrufAnnehmen").addEventListener("click", () => {
   klingelton.currentTime = 0;
   $("#anrufStatus").textContent = "Verbunden";
   $("#anrufUntertitel").textContent = "";
+  $("#anrufPause").textContent = "⏸ Pause";
   const audio = $("#anrufAudio");
   audio.currentTime = 0;
   audio.play().catch(() => {}); // Datei evtl. noch nicht da - Untertitel laufen trotzdem.
-  ANRUF_UNTERTITEL.forEach(z => {
-    setTimeout(() => {
-      const feld = $("#anrufUntertitel");
-      feld.textContent += (z.ab === 0 ? "" : " ") + z.text;
-      feld.scrollTop = feld.scrollHeight; // automatisch mitlaufen statt selbst scrollen muessen
-    }, z.ab);
-  });
-  setTimeout(anrufBeenden, ANRUF_ENDE_MS);
+  anrufLogischeZeit = 0;
+  anrufAusgegeben = 0;
+  anrufPausiert = false;
+  anrufLetzterTick = performance.now();
+  clearInterval(anrufTickTimer);
+  anrufTickTimer = setInterval(anrufTick, 100);
 });
 
 function anrufBeenden() {
@@ -1087,39 +1137,13 @@ function anrufBeenden() {
     if (schritt() < 2) {
       zeigeAufgabenfolie(2, () => {
         setzeZustand("mail");
-        // Bugfix: derselbe #start-Sichtbarkeits-Bug wie oben - ohne dieses
-        // Einblenden landete man in einer Sackgasse (schwarzer Screen),
-        // falls die Mitteilung nicht rechtzeitig angetippt wurde, bevor sie
-        // nach 7s von selbst verschwindet. Jetzt liegt darunter der
-        // Homescreen mit einem antippbaren Chat-Icon, das denselben Weg
-        // oeffnet. Siehe TODO.md.
-        $("#start").hidden = false;
-        mitteilungZeigen("Lena", "Hey, Hr. Schmidtke von ZISCH hat versucht mich zu erreichen. Konnte nicht rangehen. Was wollte er?", "chat");
+        // Kein Umweg mehr ueber die Mitteilungs-Banner - Lenas Chat kommt nach
+        // dem Anruf direkt, siehe TODO.md.
+        lenaChatOeffnen();
       });
     }
   }, 1800);
 }
-
-const mitteilung = $("#mitteilung");
-let startY = null;
-mitteilung.addEventListener("pointerdown", e => { startY = e.clientY; try { mitteilung.setPointerCapture(e.pointerId); } catch (err) {} });
-mitteilung.addEventListener("pointermove", e => {
-  if (startY === null) return;
-  const weg = e.clientY - startY;
-  // Nach unten wischen oeffnet, nach oben wegwischen laesst sie verschwinden.
-  if (weg < -40) { startY = null; mitteilung.style.transform = ""; mitteilungVerstecken(); return; }
-  mitteilung.style.transform = `translateY(${Math.min(Math.max(0, weg), 90)}px)`;
-  if (weg > 55) { startY = null; mitteilung.style.transform = ""; mitteilungOeffnen(); }
-});
-mitteilung.addEventListener("pointerup", () => { startY = null; mitteilung.style.transform = ""; });
-mitteilung.addEventListener("click", mitteilungOeffnen);
-/* War nur per Maus/Touch bedienbar (role="button" ohne Tastatur-Handler) -
-   siehe TODO.md/Compliance-Check. */
-mitteilung.addEventListener("keydown", e => {
-  if (e.key !== "Enter" && e.key !== " ") return;
-  e.preventDefault();
-  mitteilungOeffnen();
-});
 
 /* ---------- 2 — Lena schreibt direkt ----------
    Ersetzt die fruehere Kontaktliste ("wen frage ich?") - Lena meldet sich
@@ -1129,9 +1153,14 @@ mitteilung.addEventListener("keydown", e => {
 const VERLAEUFE = {};
 let witzSchonVersucht = false;
 
+/* Ohne Homescreen als Rueckfallziel geht "Zurueck" jetzt zu der App, aus der
+   heraus der Chat geoeffnet wurde (letzteApp, siehe oeffne()). Direkt nach dem
+   Anruf ist noch keine App offen gewesen - dann bleibt der Chat einfach
+   stehen (nichts zu verlassen), statt auf einen leeren Screen zu fuehren. */
 $("#chatZurueck").addEventListener("click", () => {
+  if (!letzteApp) return;
   APPS.forEach(a => $("#app-" + a).hidden = true);
-  $("#start").hidden = false;
+  $("#app-" + letzteApp).hidden = false;
 });
 
 function chatOeffnen(name) {
@@ -1377,11 +1406,14 @@ function zwillingLoesen() {
    TODO.md. */
 const ANFORDERUNGEN = [
   {id: "durchmesser", label: "Durchmesser", wert: "18 mm", aktion: "Der Durchmesser wird ermittelt",
-   genitiv: "des Durchmessers", artikel: "der Durchmesser", ziel: 18, bereich: [10, 26], einheit: "mm"},
+   genitiv: "des Durchmessers", artikel: "der Durchmesser", akkusativ: "den Durchmesser",
+   ziel: 18, bereich: [10, 26], einheit: "mm"},
   {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
-   genitiv: "des Bohrungsmaßes", artikel: "das Bohrungsmaß", ziel: 6, bereich: [2, 12], einheit: "mm"},
+   genitiv: "des Bohrungsmaßes", artikel: "das Bohrungsmaß", akkusativ: "das Bohrungsmaß",
+   ziel: 6, bereich: [2, 12], einheit: "mm"},
   {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Die Wandstärke wird geprüft",
-   genitiv: "der Wandstärke", artikel: "die Wandstärke", ziel: 3, bereich: [1, 8], einheit: "mm"}
+   genitiv: "der Wandstärke", artikel: "die Wandstärke", akkusativ: "die Wandstärke",
+   ziel: 3, bereich: [1, 8], einheit: "mm"}
 ];
 const anforderungenErfasst = [];
 let messungTimer = null;
@@ -1594,34 +1626,56 @@ const cadUebernommen = [];
 // danach. null = noch nicht angefasst, zeigt Platzhalter-Kontur.
 const cadLiveWert = {durchmesser: null, bohrung: null, wandstaerke: null};
 
+/* Siemens-Feedback 17.09.2026, Punkt 4: trotz Visualisierung nicht
+   verstaendlich, was gerade eingestellt wird. Vorher hatte nur der
+   Durchmesser eine Beschriftung, und die erschien erst nach dem Anfassen des
+   Reglers. Jetzt tragen alle drei Parameter von Anfang an eine feste
+   Beschriftung direkt am Bauteil (erst als "?", dann mit echtem Wert) -
+   siehe TODO.md. */
 function cadWireframeSVG() {
   const d = cadLiveWert.durchmesser;
   const b = cadLiveWert.bohrung;
   const w = cadLiveWert.wandstaerke;
   const dFaktor = d ? Math.max(.55, Math.min(1.5, d / 18)) : 1;
   const bRadius = b ? Math.max(3, Math.min(14, 8 * (b / 6))) : 8;
-  const wDicke = w ? Math.max(2, Math.min(22, 8 * (w / 3))) : 0;
+  const wDicke = w ? Math.max(2, Math.min(22, 8 * (w / 3))) : 7;
+  const wert = (v, einheit) => v ? `${Math.round(v)} ${einheit}` : "?";
   return `
     <g transform="translate(60,33) scale(${dFaktor.toFixed(2)}) translate(-60,-33)">
       <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
       <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-      ${w
-        ? `<rect x="20" y="16" width="${wDicke.toFixed(1)}" height="34" fill="#009999" opacity=".5"/>`
-        : `<rect x="20" y="16" width="7" height="34" fill="none" stroke="var(--linie)" stroke-width="1.2" stroke-dasharray="2 2"/>`}
+      <rect x="20" y="16" width="${wDicke.toFixed(1)}" height="34"
+        fill="${w ? "#009999" : "none"}" opacity="${w ? .5 : 1}"
+        stroke="${w ? "none" : "var(--linie)"}" stroke-width="1.2" ${w ? "" : 'stroke-dasharray="2 2"'}/>
       <circle cx="60" cy="33" r="${bRadius.toFixed(1)}" fill="none"
         stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="${b ? 2 : 1.4}" ${b ? "" : 'stroke-dasharray="2 2"'}/>
     </g>
-    ${d
-      ? `<line x1="20" y1="60" x2="100" y2="60" stroke="#009999" stroke-width="1.4"/>
-         <line x1="20" y1="56" x2="20" y2="64" stroke="#009999" stroke-width="1.4"/>
-         <line x1="100" y1="56" x2="100" y2="64" stroke="#009999" stroke-width="1.4"/>
-         <text x="60" y="69" font-size="7" fill="#009999" text-anchor="middle">⌀ ${Math.round(d)} mm</text>`
-      : `<line x1="20" y1="60" x2="100" y2="60" stroke="var(--linie)" stroke-width="1.2" stroke-dasharray="2 2"/>`}
+    <!-- Wandstärke: Beschriftung oben links, Leader zur Kante -->
+    <line x1="22" y1="16" x2="14" y2="8" stroke="${w ? "#009999" : "var(--linie)"}" stroke-width="1"/>
+    <text x="2" y="7.5" font-size="6.2" fill="${w ? "#009999" : "var(--tinte-weich)"}">Wandstärke: ${wert(w, "mm")}</text>
+    <!-- Bohrung: Beschriftung oben rechts, Leader zur Bohrung -->
+    <line x1="66" y1="24" x2="90" y2="8" stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="1"/>
+    <text x="118" y="7.5" font-size="6.2" fill="${b ? "#009999" : "var(--tinte-weich)"}" text-anchor="end">Bohrung: ${wert(b, "mm")}</text>
+    <!-- Durchmesser: Maßlinie unten, wie zuvor -->
+    <line x1="20" y1="60" x2="100" y2="60" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4" ${d ? "" : 'stroke-dasharray="2 2"'}/>
+    <line x1="20" y1="56" x2="20" y2="64" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4"/>
+    <line x1="100" y1="56" x2="100" y2="64" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4"/>
+    <text x="60" y="69" font-size="6.5" fill="${d ? "#009999" : "var(--tinte-weich)"}" text-anchor="middle">⌀ Durchmesser: ${wert(d, "mm")}</text>
   `;
+}
+
+/* Lena begleitet auch das CAD-Konzipieren per Chat, statt der Screen mit
+   sich selbst gelassen zu werden - Nutzer-Wunsch, dasselbe Muster wie
+   anforderungAnsage() beim Messschieber-Schritt. Siehe TODO.md. */
+function cadAnsage(a, index) {
+  if (index === 0) return `So, nun konzipierst du ${a.akkusativ} im CAD-Modell.`;
+  if (index === ANFORDERUNGEN.length - 1) return `Zum Schluss legst du noch ${a.akkusativ} fest.`;
+  return `Jetzt nimmst du dir ${a.akkusativ} vor.`;
 }
 
 function cadZeichnen() {
   const naechste = ANFORDERUNGEN.find(a => !cadUebernommen.includes(a));
+  if (naechste) leiste("#leiste-geraete", EXPERTIN, cadAnsage(naechste, cadUebernommen.length), "gut");
   let steuerung = "";
   if (naechste && naechste.bereich) {
     const [min, max] = naechste.bereich;
@@ -1678,7 +1732,7 @@ function cadZeichnen() {
    wie der Fraes-Loop). Dieselbe Kontur wie im CAD-Wireframe, damit klar
    bleibt: das ist dasselbe Bauteil, das gerade konfiguriert wurde. Siehe
    TODO.md. */
-function druckKoerperSVG(prozent) {
+function druckKoerperSVG(prozent, farbe = "#009999") {
   const koerperHoehe = 34, koerperOben = 16;
   const gefuellt = (prozent / 100) * koerperHoehe;
   const fuellYStart = koerperOben + (koerperHoehe - gefuellt);
@@ -1689,9 +1743,55 @@ function druckKoerperSVG(prozent) {
     <rect x="86" y="10" width="8" height="8" fill="#8A8AA3"/>
     <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
     <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" fill="#009999" opacity=".5" clip-path="url(#druckClip)"/>
+    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" fill="${farbe}" opacity=".6" clip-path="url(#druckClip)"/>
     ${prozent < 100 ? `<line x1="16" y1="${fuellYStart.toFixed(1)}" x2="104" y2="${fuellYStart.toFixed(1)}" stroke="#F59B3E" stroke-width="2"/>` : ""}
   `;
+}
+
+/* Siemens-Feedback 17.09.2026, Punkt 6: 3D-Druck lief komplett automatisch
+   ab, nur Zuschauen. Jetzt erst Farbe + Material waehlen (Siemens' eigener
+   Vorschlag) - beides Pflicht, bevor der Druck losgeht. Die gewaehlte Farbe
+   faerbt anschliessend das wachsende Druckmodell ein. Siehe TODO.md. */
+const DRUCK_FARBEN = [
+  {id: "schwarz", label: "Schwarz", hex: "#2B2B33"},
+  {id: "gruen", label: "Signalgrün", hex: "#009999"},
+  {id: "orange", label: "Orange", hex: "#F59B3E"}
+];
+const DRUCK_MATERIALIEN = [
+  {id: "pla", label: "PLA", info: "Günstig und schnell gedruckt — reicht für einen Testprototyp."},
+  {id: "abs", label: "ABS", info: "Etwas robuster, dafür braucht der Druck länger."},
+  {id: "nylon", label: "Nylon", info: "Sehr stabil, eigentlich eher für Serienteile gedacht."}
+];
+let druckFarbe = null, druckMaterial = null;
+
+function druckAuswahlZeichnen() {
+  $("#fertigungInhalt").innerHTML = `
+    <p class="frage">Prototyp im 3D-Drucker testen</p>
+    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(druckFarbe ? 100 : 0, druckFarbe?.hex))}</div></div>
+    <p class="lade-label" style="margin-top:0; text-align:left">Farbe wählen:</p>
+    <div class="pillen" id="druckFarbenAuswahl">
+      ${DRUCK_FARBEN.map(f => `<button class="pille farb-pille ${druckFarbe?.id === f.id ? "treffer" : ""}" type="button" data-id="${f.id}" style="--farbe:${f.hex}">${f.label}</button>`).join("")}
+    </div>
+    <p class="lade-label" style="margin-top:0; text-align:left">Material wählen:</p>
+    <div class="pillen" id="druckMaterialAuswahl">
+      ${DRUCK_MATERIALIEN.map(m => `<button class="pille ${druckMaterial?.id === m.id ? "treffer" : ""}" type="button" data-id="${m.id}">${m.label}</button>`).join("")}
+    </div>
+    ${druckMaterial ? `<small>${druckMaterial.info}</small>` : ""}
+    <button class="orderknopf" type="button" id="druckStartBtn" ${druckFarbe && druckMaterial ? "" : "disabled"}>Drucken starten</button>`;
+  $("#druckFarbenAuswahl").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-id]");
+    if (!btn) return;
+    druckFarbe = DRUCK_FARBEN.find(f => f.id === btn.dataset.id);
+    druckAuswahlZeichnen();
+  });
+  $("#druckMaterialAuswahl").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-id]");
+    if (!btn) return;
+    druckMaterial = DRUCK_MATERIALIEN.find(m => m.id === btn.dataset.id);
+    druckAuswahlZeichnen();
+  });
+  const startBtn = $("#druckStartBtn");
+  if (druckFarbe && druckMaterial) startBtn.addEventListener("click", druckZeichnen);
 }
 
 let druckTimer = null;
@@ -1699,7 +1799,8 @@ let druckTimer = null;
 function druckZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Prototyp im 3D-Drucker testen</p>
-    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(0))}</div></div>
+    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(0, druckFarbe.hex))}</div></div>
+    <small>${druckFarbe.label} · ${druckMaterial.label}</small>
     <div class="ladebalken"><div class="ladebalken-fuellung takt" id="druckFuellung"></div></div>
     <p class="lade-label" id="druckLabel">Prototyp wird gedruckt … <b id="druckProzent">0 %</b></p>`;
   let prozent = 0;
@@ -1708,7 +1809,7 @@ function druckZeichnen() {
     prozent = Math.min(100, prozent + 4 + Math.random() * 5);
     $("#druckFuellung").style.width = prozent + "%";
     $("#druckProzent").textContent = Math.round(prozent) + " %";
-    $("#druckKoerper").innerHTML = bild(druckKoerperSVG(prozent));
+    $("#druckKoerper").innerHTML = bild(druckKoerperSVG(prozent, druckFarbe.hex));
     if (prozent >= 100) {
       clearInterval(druckTimer);
       $("#druckLabel").textContent = "Fertig.";
@@ -1752,6 +1853,50 @@ const FRAES_FRAMES = [
 ];
 let fraesFrameTimer = null;
 
+/* Siemens-Feedback 17.09.2026, Punkt 6: Fraesen lief komplett automatisch
+   ab, nur Zuschauen. Siemens' eigener Vorschlag: einen Hebel vorsichtig in
+   der richtigen Geschwindigkeit "herunterziehen" - technisch derselbe
+   Regler wie beim CAD-Slider (Ziehen bis exakt der Zielwert stimmt),
+   inhaltlich die Vorschubgeschwindigkeit der Fraese. Erst wenn die stimmt,
+   startet der eigentliche Fraes-Vorgang. Siehe TODO.md. */
+const FRAES_ZIEL_GESCHWINDIGKEIT = 45;
+const FRAES_BEREICH = [10, 90];
+let fraesGeschwindigkeit = null;
+
+/* "Hitzestrahl"-Verlauf statt neutraler Fortschrittsfarbe: rot an beiden
+   Raendern, gruen exakt an der Position des Zielwerts - gibt eine "waermer/
+   kaelter"-Rueckmeldung waehrend des Ziehens, ohne die Zielzahl selbst zu
+   verraten (der Button bleibt trotzdem erst beim exakten Wert aktiv).
+   Nutzer-Idee per Screenshot. Siehe TODO.md. */
+function hitzeVerlaufCss(min, max, ziel) {
+  const pos = ((ziel - min) / (max - min)) * 100;
+  const gelbLinks = Math.max(0, pos - 22).toFixed(1);
+  const gelbRechts = Math.min(100, pos + 22).toFixed(1);
+  return `linear-gradient(to right, #E24E6E 0%, #F5C84A ${gelbLinks}%, ` +
+         `#2BA6A2 ${pos.toFixed(1)}%, #F5C84A ${gelbRechts}%, #E24E6E 100%)`;
+}
+
+function fraesenAuswahlZeichnen() {
+  const [min, max] = FRAES_BEREICH;
+  const aktuell = fraesGeschwindigkeit ?? min;
+  $("#fertigungInhalt").innerHTML = `
+    <p class="frage">Bauteil auf der Fräsmaschine fertigen</p>
+    <div class="fertigung-karte" id="fraesKarte">${bild(FRAES_FRAMES[0])}</div>
+    <div class="cad-slider">
+      <label for="fraesHebel">Vorschubgeschwindigkeit: <b id="fraesHebelWert">${aktuell} mm/min</b></label>
+      <input type="range" id="fraesHebel" class="fraes-hebel" min="${min}" max="${max}" step="1" value="${aktuell}"
+        style="background: ${hitzeVerlaufCss(min, max, FRAES_ZIEL_GESCHWINDIGKEIT)}">
+      <button class="orderknopf" type="button" id="fraesStartBtn" ${aktuell === FRAES_ZIEL_GESCHWINDIGKEIT ? "" : "disabled"}>Fräsen starten</button>
+    </div>
+    <small>Hebel vorsichtig auf die richtige Geschwindigkeit ziehen — grün ist genau richtig, rot ist zu schnell oder zu langsam.</small>`;
+  $("#fraesHebel").addEventListener("input", () => {
+    fraesGeschwindigkeit = Number($("#fraesHebel").value);
+    $("#fraesHebelWert").textContent = `${fraesGeschwindigkeit} mm/min`;
+    $("#fraesStartBtn").disabled = fraesGeschwindigkeit !== FRAES_ZIEL_GESCHWINDIGKEIT;
+  });
+  $("#fraesStartBtn").addEventListener("click", fraesenZeichnen);
+}
+
 function fraesenZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Bauteil auf der Fräsmaschine fertigen</p>
@@ -1776,8 +1921,8 @@ function fraesenZeichnen() {
 
 function fertigungZeichnen() {
   if (fertigungStufe === "cad") cadZeichnen();
-  else if (fertigungStufe === "druck") druckZeichnen();
-  else if (fertigungStufe === "fraesen") fraesenZeichnen();
+  else if (fertigungStufe === "druck") druckAuswahlZeichnen();
+  else if (fertigungStufe === "fraesen") fraesenAuswahlZeichnen();
 }
 fertigungZeichnen();
 
@@ -1787,7 +1932,7 @@ function fertigungAbschliessen() {
   setTimeout(() => {
     sagt("Das Ersatzteil ist gefertigt, super.");
     tippt(() => {
-      sagt("Ich muss los — plan du den Tag, unten liegen drei Aufgaben.");
+      sagt("Ich muss los — bring die Anlage per Code zum Laufen, unten liegen die Bausteine.");
       setTimeout(() => {
         zeigeAufgabenfolie(5, () => {
           setzeZustand("plan");
@@ -1798,76 +1943,130 @@ function fertigungAbschliessen() {
   }, 1200);
 }
 
-/* ---------- 5 — Reihenfolge ----------
-   Ersetzt den frueheren Uhrzeit-Kalender: die vier Schlussschritte haengen
-   rein logisch zusammen, nicht an festen Uhrzeiten wie die vorherigen
-   Kalender-Blöcke - deshalb jetzt eine Tap-Reihenfolge statt Zeitslots.
-   Bewusst nur Tippen (kein Ziehen), damit WCAG 2.5.1 von vornherein erfuellt
-   ist, ohne eine zusaetzliche Alternative bauen zu muessen. Siehe TODO.md. */
-const REIHENFOLGE = [
-  {id: "einbau", label: "Ersatzteil einbauen"},
-  {id: "inbetrieb", label: "Anlage in Betrieb nehmen"},
-  {id: "test", label: "Funktionstest durchführen"},
-  {id: "doku", label: "Ergebnisse dokumentieren"}
+/* ---------- 5 — Programmieren ----------
+   Ersetzt die fruehere Reihenfolge-Aufgabe: Siemens-Feedback im persoenlichen
+   Gespraech - Mechatroniker*innen programmieren auch Maschinen, nicht nur
+   Handarbeit. Scratch-artige Bloecke statt Aufgaben-Karten, sonst derselbe
+   getestete Tap-Mechanismus wie vorher (richtige Reihenfolge antippen).
+   Tippen bleibt die Hauptmechanik (WCAG 2.5.1 - jede Zieh-Geste braucht eine
+   Tipp-Alternative), Ziehen kommt als Bonus obendrauf und ruft am Ende
+   dieselbe Pruef-Funktion auf wie ein Tap. Siehe TODO.md. */
+/* label = natuerlichsprachiger Text fuer Lenas Chat-Nachrichten, code = was
+   tatsaechlich auf dem Block steht - Funktions-Syntax statt Fliesstext, das
+   war der eigentliche Nutzer-Wunsch ("sieht nicht nach Coden aus"). */
+const CODE_BLOECKE = [
+  {id: "sicherheit", label: "Sicherheitscheck durchführen", code: "sicherheitscheck()"},
+  {id: "kalibrieren", label: "Sensor kalibrieren", code: "sensor.kalibrieren()"},
+  {id: "antrieb", label: "Antrieb starten", code: "antrieb.starten()"},
+  {id: "melden", label: "Betriebsbereit melden", code: "status.melden()"}
 ];
 // Feste, gemischte Anzeige-Reihenfolge (nicht die Loesung selbst).
-const REIHENFOLGE_ANZEIGE = [REIHENFOLGE[2], REIHENFOLGE[0], REIHENFOLGE[3], REIHENFOLGE[1]];
-const reihenfolgeErledigt = [];
-/* Gefuehrter Dialog statt einer offenen Karten-Auswahl von Anfang an -
-   Nutzer-Wunsch: "Was machst du als erstes?" -> Antwort -> "Und jetzt, was
-   kommt als naechstes?" usw. Die Optionen werden mit jeder richtigen Antwort
-   weniger, statt alle vier permanent nebeneinander liegen zu lassen. Siehe
-   TODO.md. */
-const REIHENFOLGE_FRAGEN = [
-  "Du bist beim Kunden. Was machst du als erstes?",
-  "Und jetzt, was kommt als nächstes?",
-  "Weiter geht's — was kommt jetzt?",
-  "Und zum Schluss?"
+const CODE_BLOECKE_ANZEIGE = [CODE_BLOECKE[2], CODE_BLOECKE[0], CODE_BLOECKE[3], CODE_BLOECKE[1]];
+const codeErledigt = [];
+const CODE_FRAGEN = [
+  "Jetzt bist du beim Kunden. Das Teil ist eingebaut — bring es mit etwas Code zum Laufen.",
+  "Welcher Block kommt als Nächstes ins Programm?",
+  "Weiter geht's — welcher Block jetzt?",
+  "Und der letzte Block zum Schluss?"
 ];
 
-function reihenfolgeZeichnen() {
-  const offen = REIHENFOLGE_ANZEIGE.filter(r => !reihenfolgeErledigt.includes(r));
-  $("#reihenfolgeKarten").innerHTML = offen.map(r => `
-    <button class="pille" type="button" data-id="${r.id}">${r.label}</button>
+function codeZeichnen() {
+  const offen = CODE_BLOECKE_ANZEIGE.filter(b => !codeErledigt.includes(b));
+  // Bricht lieber hinter dem Punkt um als mitten im Bezeichner - schmale
+  // Handy-Breite, lange Funktionsnamen wie "sensor.kalibrieren()".
+  const codeText = b => b.code.replace(".", ".<wbr>");
+  // aria-label mit dem natuerlichsprachigen Text: die Code-Syntax auf dem
+  // Block ("sicherheitscheck()") ist fuer sehende Nutzer*innen gedacht,
+  // Screenreader sollen weiterhin den verstaendlichen Text vorlesen. Siehe
+  // TODO.md.
+  $("#codeTray").innerHTML = offen.map(b => `
+    <button class="code-block" type="button" data-id="${b.id}" aria-label="${b.label}">${codeText(b)}</button>
   `).join("");
-  const voll = reihenfolgeErledigt.length === REIHENFOLGE.length;
-  $("#reihenfolgeListe").innerHTML =
-    `<div class="zaehler ${voll ? "voll" : ""}">Reihenfolge: ${reihenfolgeErledigt.length} von ${REIHENFOLGE.length}</div>` +
-    (reihenfolgeErledigt.length
-      ? `<ul>${reihenfolgeErledigt.map((r, i) => `<li>${i + 1}. ${r.label}</li>`).join("")}</ul>`
-      : `<p class="leer">Noch nichts einsortiert.</p>`);
+  const voll = codeErledigt.length === CODE_BLOECKE.length;
+  $("#codeZaehler").textContent = `Programm: ${codeErledigt.length} von ${CODE_BLOECKE.length} Blöcken`;
+  $("#codeZaehler").classList.toggle("voll", voll);
+  $("#codeStapel").innerHTML = codeErledigt.length
+    ? codeErledigt.map(b => `<div class="code-block" aria-label="${b.label}">${codeText(b)}</div>`).join("")
+    : `<p class="leer">Tippe oder ziehe die Code-Blöcke hier rein.</p>`;
+  codeZiehenAktivieren();
   // Lena begleitet auch hier per Chat statt einer stillen Ueberschrift -
   // dieselbe Ansage wandert oben in die Leiste, wie bei den anderen
   // Screens. Ueberschrieben wird das direkt danach von "Richtig!" im
-  // Klick-Handler, sobald eine Antwort gewaehlt wurde. Siehe TODO.md.
+  // Klick-Handler, sobald ein Block gewaehlt wurde. Siehe TODO.md.
   if (offen.length) {
-    leiste("#leiste-plan", EXPERTIN, REIHENFOLGE_FRAGEN[reihenfolgeErledigt.length] || "Was kommt als nächstes?", "gut");
+    leiste("#leiste-plan", EXPERTIN, CODE_FRAGEN[codeErledigt.length] || "Welcher Block kommt jetzt?", "gut");
   }
 }
-reihenfolgeZeichnen();
+codeZeichnen();
 
-$("#reihenfolgeKarten").addEventListener("click", e => {
-  const btn = e.target.closest("button");
-  if (!btn || schritt() !== 5) return;
-  const r = REIHENFOLGE.find(x => x.id === btn.dataset.id);
-  const naechste = REIHENFOLGE[reihenfolgeErledigt.length];
-  if (r !== naechste) {
-    leiste("#leiste-plan", "Überleg nochmal", `Noch nicht — was muss zuerst passieren, bevor „${r.label}“ drankommt?`);
+function codeBlockVersuchen(id, knopf) {
+  if (schritt() !== 5) return;
+  const b = CODE_BLOECKE.find(x => x.id === id);
+  const naechster = CODE_BLOECKE[codeErledigt.length];
+  if (b !== naechster) {
+    leiste("#leiste-plan", "Überleg nochmal", `Noch nicht — was muss zuerst passieren, bevor „${b.label}“ drankommt?`);
+    if (knopf) { knopf.classList.add("falsch"); setTimeout(() => knopf.classList.remove("falsch"), 350); }
     return;
   }
-  reihenfolgeErledigt.push(r);
-  reihenfolgeZeichnen();
-  if (reihenfolgeErledigt.length < REIHENFOLGE.length) {
-    leiste("#leiste-plan", "Richtig!", `<b>${r.label}</b> steht.`, "gut");
+  codeErledigt.push(b);
+  codeZeichnen();
+  const neuerBlock = $("#codeStapel").lastElementChild;
+  if (neuerBlock) { neuerBlock.classList.add("snap"); setTimeout(() => neuerBlock.classList.remove("snap"), 300); }
+  if (codeErledigt.length < CODE_BLOECKE.length) {
+    leiste("#leiste-plan", "Richtig!", `<b>${b.label}</b> steht.`, "gut");
     return;
   }
   leiste("#leiste-plan", "Richtig!",
-         "Genau so: erst einbauen, dann in Betrieb nehmen, testen und dokumentieren.", "gut");
+         "Programm läuft durch — Sicherheitscheck, Sensor, Antrieb, Meldung.", "gut");
   setzeZustand("fertig");
+  // Laeuft jetzt automatisch weiter statt ueber eine antippbare Mitteilung,
+  // die sich ueber den Screen legt - Nutzer-Feedback: das war die einzige
+  // Stelle im ganzen Spiel, die noch so funktionierte, alle anderen
+  // Uebergaenge laufen in-screen per Leiste automatisch weiter. Siehe
+  // TODO.md.
   setTimeout(() => {
-    mitteilungZeigen("Lena", "Das hast du echt gut gemacht. Das hier war ja nur eine Simulation und ich bin nicht echt. Aber schau dir doch gerne mal deine Einstiegsmöglichkeiten bei SIEMENS an.", "nadine");
+    leiste("#leiste-plan", EXPERTIN, "Läuft super — ich zeig dir noch was.", "gut");
+    setTimeout(() => oeffne("nadine"), 1800);
   }, 3200);
+}
+
+$("#codeTray").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-id]");
+  if (!btn || btn.dataset.geradeGezogen) return;
+  codeBlockVersuchen(btn.dataset.id, btn);
 });
+
+/* Ziehen obendrauf: rein visuelles Verschieben per Pointer-Events, endet
+   aber in derselben Pruef-Funktion wie ein Tap - keine eigene Zielzonen-Erkennung noetig,
+   jedes Loslassen nach echter Bewegung zaehlt als Versuch. Kurzes Flag
+   verhindert, dass zusaetzlich der nachfolgende native click denselben
+   Versuch nochmal ausloest (nur bei falscher Antwort relevant, da der
+   Block bei richtiger Antwort ohnehin aus dem DOM verschwindet). */
+function codeZiehenAktivieren() {
+  $("#codeTray").querySelectorAll(".code-block").forEach(knopf => {
+    let startX = null, startY = null, gezogen = false;
+    knopf.addEventListener("pointerdown", e => {
+      startX = e.clientX; startY = e.clientY; gezogen = false;
+      try { knopf.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    knopf.addEventListener("pointermove", e => {
+      if (startX === null) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!gezogen && Math.hypot(dx, dy) > 6) { gezogen = true; knopf.classList.add("ziehen"); }
+      if (gezogen) knopf.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+    knopf.addEventListener("pointerup", () => {
+      knopf.style.transform = "";
+      knopf.classList.remove("ziehen");
+      if (gezogen) {
+        knopf.dataset.geradeGezogen = "1";
+        setTimeout(() => { delete knopf.dataset.geradeGezogen; }, 0);
+        codeBlockVersuchen(knopf.dataset.id, knopf);
+      }
+      startX = null;
+    });
+  });
+}
 
 /* ---------- Dev-Sprungmenue ----------
    Reine Test-/Review-Hilfe, kein Teil des eigentlichen Spiels: erlaubt
@@ -1879,12 +2078,11 @@ function devAufraeumen() {
   $("#einstieg").hidden = true;
   $("#anrufscreen").hidden = true;
   $("#anrufscreen").classList.remove("klingelt");
-  $("#mitteilung").style.display = "none";
   $("#aufgabenfolie").hidden = true;
-  $("#start").hidden = true;
   clearInterval(messungTimer);
   clearInterval(druckTimer);
   clearInterval(fraesFrameTimer);
+  clearInterval(anrufTickTimer);
   // Bug-Fix: der Klingelton lief beim Wegspringen von "Anruf" (ohne auf
   // Annehmen zu klicken) im Hintergrund einfach weiter, weil nur der
   // Annehmen-Handler ihn stoppte. Jetzt stoppt jeder Dev-Sprung ihn zuerst.
@@ -1925,21 +2123,23 @@ const DEVMENU_ZIELE = {
   },
   druck() {
     devAufraeumen();
+    druckFarbe = null; druckMaterial = null;
     fertigungStufe = "druck";
     setzeZustand("geraete"); oeffne("geraete");
     fertigungZeichnen();
   },
   fraesen() {
     devAufraeumen();
+    fraesGeschwindigkeit = null;
     fertigungStufe = "fraesen";
     setzeZustand("geraete"); oeffne("geraete");
     fertigungZeichnen();
   },
   reihenfolge() {
     devAufraeumen();
-    reihenfolgeErledigt.length = 0;
+    codeErledigt.length = 0;
     setzeZustand("plan"); oeffne("tagesplan");
-    reihenfolgeZeichnen();
+    codeZeichnen();
   },
   ende() { devAufraeumen(); oeffne("nadine"); }
 };
@@ -1956,6 +2156,18 @@ $("#devmenuListe").addEventListener("click", e => {
   const fn = DEVMENU_ZIELE[btn.dataset.ziel];
   if (fn) fn();
 });
+
+// Eingebettet (Sales-Seite "Für Unternehmen"): der Text-Einstieg entfaellt,
+// der Anruf-Bildschirm soll dort sofort als Startbildschirm zu sehen sein -
+// ohne die 1,5s-Verzoegerung des regulaeren Einstiegs dazwischen. Der
+// eigenstaendige Demo-Link bleibt unveraendert. Steht bewusst ganz am
+// Skriptende, damit alle vorher benutzten Funktionen/Variablen schon
+// initialisiert sind.
+if (document.documentElement.classList.contains("eingebettet")) {
+  $("#einstieg").hidden = true;
+  setzeZustand("anruf");
+  anrufOeffnen();
+}
 </script>
 </body>
 </html>
