@@ -219,12 +219,16 @@
   .anruf-knoepfe { display: flex; justify-content: space-between; padding: 0 20px; }
   .anruf-knopf {
     width: 62px; height: 62px; border-radius: 50%; border: none; font-size: 1.5rem;
-    cursor: pointer; color: #fff;
+    cursor: pointer; color: #fff; padding: 0;
+    display: flex; align-items: center; justify-content: center;
   }
   .anruf-knopf.ablehnen { background: #E24E6E; }
   .anruf-knopf.ablehnen:hover { background: #C03A57; }
-  .anruf-knopf.annehmen { background: var(--gruen); }
-  .anruf-knopf.annehmen:hover { background: #1E7D7A; }
+  /* Klares Gruen statt Siemens-Petrol + eigener weisser Hoerer statt des
+     Emojis: das Emoji war unter Windows rosa/rot und wurde als "Send to
+     Voicemail" gelesen (Siemens-Feedback, Steven). Siehe TODO.md. */
+  .anruf-knopf.annehmen { background: #2A9456; }
+  .anruf-knopf.annehmen:hover { background: #1F7443; }
   .anruf-verbunden { margin-top: 26px; width: 100%; flex: 1; display: flex; flex-direction: column; min-height: 0; }
   .anruf-status { font-size: .8rem; color: rgba(255,255,255,.6); margin: 0 0 14px; }
   .anruf-untertitel {
@@ -414,11 +418,18 @@
   /* Puzzle-Steckverbindung im Stapel: ein Trapez in Blockfarbe statt eines
      schlichten Punkts - steckt sichtbar im Block darueber, wie bei echten
      Scratch-Bloecken. */
-  #codeStapel .code-block { background: var(--gruen); cursor: default; }
+  /* Dunkleres Petrol als --gruen im Stapel: weisser Text auf #2BA6A2 hatte nur
+     ca. 3:1 Kontrast, auf #007C7C sind es gut 5:1. */
+  #codeStapel .code-block { background: var(--orange-dunkel); cursor: default; }
   #codeStapel .code-block:not(:first-child)::before {
     content: ""; position: absolute; top: -7px; left: 20px; width: 20px; height: 8px;
-    background: var(--gruen); clip-path: polygon(18% 100%, 82% 100%, 100% 0, 0 0);
+    background: var(--orange-dunkel); clip-path: polygon(18% 100%, 82% 100%, 100% 0, 0 0);
   }
+  .code-kommentar {
+    display: block; margin-top: 5px; font-size: .7rem; font-weight: 400;
+    color: rgba(255,255,255,.78); line-height: 1.35;
+  }
+  #codeStapel .code-kommentar { color: #fff; }
   @keyframes codeSnap {
     0% { transform: scale(1.14); } 60% { transform: scale(.95); } 100% { transform: scale(1); }
   }
@@ -434,6 +445,13 @@
     .code-block.falsch { animation: codeShake .35s ease-in-out; }
   }
   .code-block.ziehen { cursor: grabbing; box-shadow: 0 6px 16px rgba(0,0,0,.3); z-index: 5; }
+  /* Schallwellen der Ultraschall-Sonde beim Messen (pulsieren, versetzt). */
+  @keyframes schall { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .schallwellen path { animation: schall 1s ease-in-out infinite; }
+    .schallwellen path:nth-child(2) { animation-delay: .15s; }
+    .schallwellen path:nth-child(3) { animation-delay: .3s; }
+  }
   .orderknopf {
     display: block; width: 100%; margin-top: 12px; font: inherit; font-size: .98rem;
     font-weight: 800; color: #fff; background: var(--orange); border: none;
@@ -565,9 +583,27 @@
   .devmenu-liste button:hover { background: var(--orange); color: #fff; }
   .devmenu-toggle:focus-visible, .devmenu-liste button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
+  /* Auf dem Handy selbst entfaellt der Handy-Rahmen: Das Spiel fuellt den
+     ganzen Bildschirm. Siemens-Feedback (Steven + Daniela): das Mockup war
+     dort nur etwa halb so breit wie das Display, zu wenig Platz fuer die
+     vielen Inhalte, und fuer eine Barrierefreiheitspruefung soll das Spiel
+     wirklich mobil spielbar sein. Die gespielte Statusleiste und das
+     aeussere Logo entfallen mit, jeder Screen hat sein eigenes Logo im
+     Kopf. Siehe TODO.md. */
+  /* html:not(.eingebettet): die eingebettete Darstellung (Sales-Seite) behaelt
+     ihr Handy-Mockup auch in schmalen iframes. */
   @media (max-width: 700px) {
-    body { padding-top: 64px; }
-    .geraet { --breit: min(330px, 86vw, 68vh * 0.462); }
+    html:not(.eingebettet) body { display: block; padding: 0; min-height: 100vh; min-height: 100dvh; }
+    html:not(.eingebettet) .seitenlogo, html:not(.eingebettet) .status { display: none; }
+    html:not(.eingebettet) .geraet {
+      width: 100%; height: 100vh; height: 100dvh; padding: 0;
+      border-radius: 0; box-shadow: none;
+    }
+    html:not(.eingebettet) .schirm, html:not(.eingebettet) .anrufscreen,
+    html:not(.eingebettet) .aufgabenfolie { border-radius: 0; }
+    /* Das Test-Sprungmenue schwebte auf dem Handy ueber dem Inhalt (z. B. ueber
+       dem Messwert) - auf Handy-Breite ausgeblendet. */
+    html:not(.eingebettet) .devmenu { display: none; }
   }
 
   /* ---------- Eingebettete Darstellung (siehe Skript im <head>) ---------- */
@@ -592,7 +628,7 @@
 <div class="geraet">
   <div class="schirm">
 
-    <div class="status"><span>07:12</span><span class="rechts">▮▮▮ 78 %</span></div>
+    <div class="status"><span>08:10</span><span class="rechts">▮▮▮ 78 %</span></div>
 
     <div class="einstieg" id="einstieg">
       <div class="eyebrow" id="e0"></div>
@@ -611,7 +647,7 @@
     <div class="anrufscreen" id="anrufscreen" hidden>
       <div class="anruf-avatar">TS</div>
       <div class="anruf-name">Torsten Schmidtke</div>
-      <div class="anruf-firma">ZISCH Getränke · 06:40</div>
+      <div class="anruf-firma">ZISCH Getränke · 08:10</div>
 
       <div class="anruf-klingelt" id="anrufKlingelt">
         <p class="anruf-hinweis" id="anrufAblehnenHinweis" hidden>
@@ -619,7 +655,7 @@
         </p>
         <div class="anruf-knoepfe">
           <button class="anruf-knopf ablehnen" id="anrufAblehnen" type="button" aria-label="Anruf ablehnen">✕</button>
-          <button class="anruf-knopf annehmen" id="anrufAnnehmen" type="button" aria-label="Anruf annehmen">📞</button>
+          <button class="anruf-knopf annehmen" id="anrufAnnehmen" type="button" aria-label="Anruf annehmen"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="#fff" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></button>
         </div>
       </div>
 
@@ -743,12 +779,12 @@
         </div>
         <div class="wege">
           <a class="cta" href="https://www.ausbildung.siemens.com/schuelerpraktikum" target="_blank" rel="noopener">Schülerpraktikum</a>
-          <!-- TODO: durch die konkrete Mechatroniker*in-Ausbildungsseite ersetzen, sobald die URL feststeht -->
-          <a class="cta zweit" href="https://www.ausbildung.siemens.com/" target="_blank" rel="noopener">Ausbildung als Mechatroniker*in</a>
+          <!-- Gefilterte Mechatroniker-Uebersicht, URL von Siemens (Steven) vorgegeben, inkl. utm_source -->
+          <a class="cta zweit" href="https://www.ausbildung.siemens.com/search?utm_source=praktikum-fertigung-v3.vercel.app&amp;custom_filter_2=Ausbildung&amp;cluster=Ausbildung%3A%20Mechatroniker%28w%2Fm%2Fd%29&amp;custom_filter_1=Bewerbung%20m%C3%B6glich" target="_blank" rel="noopener">Ausbildung als Mechatroniker*in</a>
         </div>
         <div class="klarstellung">
           <b>Wichtig zu wissen</b>
-          <p>Steffi, Lena, Sabine und Torsten Schmidtke gibt es nicht wirklich. Das hier ist
+          <p>Lena und Torsten Schmidtke gibt es nicht wirklich. Das hier ist
              eine Simulation — niemand beobachtet oder bewertet dich, und niemand aus dem
              Unternehmen hat deine Antworten gesehen.</p>
           <p>Ob ein Praktikum oder eine Ausbildung zu dir passt, entscheidest allein du.</p>
@@ -858,13 +894,25 @@ function oeffne(name) {
 function leiste(id, wer, text, klasse = "") {
   const el = $(id);
   const vonExpertin = wer === EXPERTIN;
+  // Kein Doppelpunkt hinter "Richtig!" o. ae. - Siemens-Feedback (Daniela):
+  // "Richtig!: ..." liest sich falsch. Siehe TODO.md.
+  const trenner = /[!?.]$/.test(wer) ? "" : ":";
   el.hidden = false;
   el.className = "auftragsleiste " + klasse;
   el.innerHTML = `<div class="kopfzeile">💬 TEAM ${vonExpertin ? '<span class="mehr">›</span>' : ""}</div>
-                  <span class="von">${wer}:</span> ${text}`;
+                  <span class="von">${wer}${trenner}</span> ${text}`;
   el.style.cursor = vonExpertin ? "pointer" : "default";
   el.onclick = vonExpertin ? () => chatOeffnen(EXPERTIN) : null;
   setTimeout(() => el.classList.add("da"), 30);
+}
+
+/* Scrollt den Inhalt eines App-Screens nach oben. Nach dem Neuzeichnen
+   blieb die Scroll-Position sonst unten, und beim naechsten Schritt sah man
+   Titel und Zeichnung nicht mehr - Siemens-Feedback (Steven): "Dialogfenster
+   ueberdeckt Aufgabe oder Text". Siehe TODO.md. */
+function nachOben(appName) {
+  const inhalt = document.querySelector(`#app-${appName} .inhalt`);
+  if (inhalt) inhalt.scrollTop = 0;
 }
 
 /* ---------- 1 — Mitteilung ---------- */
@@ -947,10 +995,19 @@ else setTimeout(() => tippe(0), 350);
    des Spiels "entsperrt" die Elemente fuer spaetere play()-Aufrufe ohne
    frischen Klick. */
 function audioEntsperren() {
-  [$("#anrufAudio"), $("#lenaZwillingAudio"), $("#fraesAudio"), $("#klingeltonAudio")].forEach(a => {
+  // Stumm entsperren: auf dem Handy war das kurze An-und-Aus hoerbar, noch
+  // bevor man den Anruf angenommen hatte (Siemens-Feedback, Steven). Per
+  // muted statt volume, weil iOS volume ignoriert. Der Klingelton fehlt hier
+  // bewusst: anrufOeffnen() spielt ihn direkt im selben Klick ab (damit ist er
+  // schon freigeschaltet), und ein nachgelagertes pause() aus dem Entsperren
+  // wuerde ihn sofort wieder anhalten. Siehe TODO.md.
+  [$("#anrufAudio"), $("#lenaZwillingAudio"), $("#fraesAudio")].forEach(a => {
     if (!a) return;
+    a.muted = true;
+    const wieder = () => { a.pause(); a.currentTime = 0; a.muted = false; };
     const p = a.play();
-    if (p && p.then) p.then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+    if (p && p.then) p.then(wieder).catch(() => { a.muted = false; });
+    else wieder();
   });
 }
 
@@ -971,8 +1028,8 @@ $("#losGehts").addEventListener("click", () => {
 const AUFGABENFOLIEN = {
   2: "Kurz darauf meldet sich deine Kollegin Lena bei dir. Sie ist Mechatronikerin bei uns.",
   3: "Finde am digitalen Zwilling heraus, welches Bauteil kaputt ist. Lena begleitet dich per Chat.",
-  4: "Plane das Ersatzteil am Computer (CAD) — Schritt für Schritt geht's dann zur Fertigung.",
-  5: "Zum Abschluss bringst du die Anlage beim Kunden per Code wieder zum Laufen."
+  4: "Plane das Ersatzteil am Computer (CAD, Konstruieren am Rechner) — Schritt für Schritt geht's dann zur Fertigung.",
+  5: "Zum Abschluss bringst du die Anlage beim Kunden per Code wieder zum Laufen. Du legst fest, in welcher Reihenfolge die Maschine ihre Schritte selbst abarbeitet."
 };
 let aufgabenfolieWeiter = null;
 
@@ -1242,6 +1299,16 @@ function zeigeAntwortOptionen() {
   });
 }
 
+/* Einzelner "Weiter"-Chip im Chat, sieht aus wie die Antwort-Chips. */
+function chatWeiterKnopf(text, danach) {
+  const div = document.createElement("div");
+  div.className = "pillen chat-antworten";
+  div.innerHTML = `<button class="pille" type="button">${text}</button>`;
+  $("#verlauf").appendChild(div);
+  div.scrollIntoView({block: "nearest"});
+  div.querySelector("button").addEventListener("click", () => { div.remove(); danach(); }, {once: true});
+}
+
 function lenaAntwortWaehlen(id, div) {
   antwortVersucht.add(id);
   ichSage(LENA_ANTWORTEN[id]);
@@ -1257,10 +1324,15 @@ function lenaAntwortWaehlen(id, div) {
       // stille Pause. Siehe TODO.md.
       tippt(() => {
         sprachnachricht(LENA_ZWILLING_UNTERTITEL, "lenaZwillingAudio", LENA_ZWILLING_ENDE_MS, () => {
-          zeigeAufgabenfolie(3, () => {
-            setzeZustand("gefragt");
-            oeffne("zwilling");
-            leiste("#leiste-zwilling", EXPERTIN, "Tippe eine markierte Stelle an der Anlage an.");
+          // Kein automatisches Weiterspringen mehr: Siemens-Feedback (Steven) -
+          // erst nach einem Klick geht's weiter, damit man den Text der
+          // Sprachnachricht in Ruhe zu Ende lesen kann. Siehe TODO.md.
+          chatWeiterKnopf("Weiter", () => {
+            zeigeAufgabenfolie(3, () => {
+              setzeZustand("gefragt");
+              oeffne("zwilling");
+              leiste("#leiste-zwilling", EXPERTIN, "Tippe eine markierte Stelle an der Anlage an.");
+            });
           });
         });
       }, 5000);
@@ -1404,14 +1476,17 @@ function zwillingLoesen() {
    Dieselbe Liste wird spaeter im CAD-Schritt wiederverwendet (siehe unten),
    damit die eigene Analyse sich sichtbar im Modell niederschlaegt. Siehe
    TODO.md. */
+/* "Laenge" statt vorher "Durchmesser": das Bauteil ist ein Quader mit Loch,
+   ein Durchmesser passt nur zu runden Teilen (Siemens-Feedback, Daniela:
+   "wir hatten ja nur die Laenge ausgemessen"). Siehe TODO.md. */
 const ANFORDERUNGEN = [
-  {id: "durchmesser", label: "Durchmesser", wert: "18 mm", aktion: "Der Durchmesser wird ermittelt",
-   genitiv: "des Durchmessers", artikel: "der Durchmesser", akkusativ: "den Durchmesser",
+  {id: "laenge", label: "Länge", wert: "18 mm", aktion: "Die Länge wird ermittelt",
+   genitiv: "der Länge", artikel: "die Länge", akkusativ: "die Länge",
    ziel: 18, bereich: [10, 26], einheit: "mm"},
   {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
    genitiv: "des Bohrungsmaßes", artikel: "das Bohrungsmaß", akkusativ: "das Bohrungsmaß",
    ziel: 6, bereich: [2, 12], einheit: "mm"},
-  {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Die Wandstärke wird geprüft",
+  {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Ultraschall läuft durch die Wand",
    genitiv: "der Wandstärke", artikel: "die Wandstärke", akkusativ: "die Wandstärke",
    ziel: 3, bereich: [1, 8], einheit: "mm"}
 ];
@@ -1437,8 +1512,11 @@ function caliperSVG(wert, a) {
   const linksX = mitte - gap / 2, rechtsX = mitte + gap / 2;
   if (a.id === "bohrung") {
     const radius = zielGap / 2;
+    // Bauteil-Umriss um das Loch, damit der Kreis als Bohrung IM Bauteil
+    // erkennbar ist (Siemens-Feedback, Daniela). Siehe TODO.md.
     return `
-      <circle cx="${mitte}" cy="38" r="${radius.toFixed(1)}" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+      <rect x="20" y="10" width="80" height="56" rx="4" fill="#EEF1F4" stroke="#8A8AA3" stroke-width="2"/>
+      <circle cx="${mitte}" cy="38" r="${radius.toFixed(1)}" fill="#fff" stroke="#8A8AA3" stroke-width="2"/>
       <rect x="${mitte - 3}" y="6" width="6" height="30" fill="#4A5C6E"/>
       <path d="M${linksX} 38 L${mitte - 3} 30 M${linksX} 38 L${mitte - 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
       <path d="M${rechtsX} 38 L${mitte + 3} 30 M${rechtsX} 38 L${mitte + 3} 46" stroke="#009999" stroke-width="3" fill="none" stroke-linecap="round"/>
@@ -1460,12 +1538,20 @@ function caliperSVG(wert, a) {
    Klick/Enter statt per Halten-Geste - Halten ist fuer Tastatur-/
    Switch-Bedienung schwer zugaenglich, ein normaler Button-Klick loest
    denselben simulierten Messvorgang zuverlaessig aus. Siehe TODO.md. */
-function sondeSVG() {
+function sondeSVG(messend = false) {
+  // Waehrend der Messung laufen Schallwellen-Boegen unter der Sonde durch
+  // die Wand - macht das Ultraschall-Prinzip sichtbar (Siemens-Feedback,
+  // Daniela: "wie misst sie die Dicke?"). Siehe TODO.md.
+  const wellen = messend ? `
+    <g class="schallwellen" fill="none" stroke="#009999" stroke-width="1.6" stroke-linecap="round">
+      <path d="M54 50 Q60 54 66 50"/><path d="M50 53 Q60 59 70 53"/><path d="M46 56 Q60 64 74 56"/>
+    </g>` : "";
   return `
     <rect x="18" y="42" width="84" height="18" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
     <rect x="50" y="10" width="20" height="36" rx="4" fill="#4A5C6E"/>
     <circle cx="60" cy="46" r="5" fill="#009999"/>
     <line x1="60" y1="10" x2="60" y2="2" stroke="#8A8AA3" stroke-width="2"/>
+    ${wellen}
   `;
 }
 
@@ -1485,6 +1571,7 @@ function anforderungenZeichnen() {
   const naechste = ANFORDERUNGEN[index];
   box.innerHTML = `
     ${naechste ? `<div id="messWerkzeugFlaeche"></div>` : ""}`;
+  nachOben("zwilling");
   if (naechste) {
     zeigeMessWerkzeug(naechste);
     leiste("#leiste-zwilling", EXPERTIN, anforderungAnsage(naechste, index), "gut");
@@ -1500,7 +1587,9 @@ function zeigeMessWerkzeug(a) {
     $("#messWerkzeugFlaeche").innerHTML = `
       <div class="fertigung-karte">
         ${bild(sondeSVG())}
-        <small>Sonde von außen auf die Fläche aufsetzen.</small>
+        <small>Eine Ultraschall-Sonde: Du setzt sie von außen auf die Wand. Sie schickt einen
+          Schallimpuls hindurch und misst, wie lange das Echo von der Rückseite braucht.
+          Daraus ergibt sich die Dicke.</small>
       </div>
       <button class="orderknopf" type="button" id="messungBtn">Sonde aufsetzen</button>`;
     $("#messungBtn").addEventListener("click", () => messungSimulieren(a));
@@ -1511,7 +1600,9 @@ function zeigeMessWerkzeug(a) {
   $("#messWerkzeugFlaeche").innerHTML = `
     <div class="fertigung-karte">
       <div id="caliperKoerper">${bild(caliperSVG(min, a))}</div>
-      <small>Messschieber ${istBohrung ? "auseinanderziehen" : "zusammendrücken"}, bis er das Bauteil berührt.</small>
+      <small>${istBohrung
+        ? "Stecke die Innenbacken in die Bohrung (das Loch) und ziehe sie auseinander, bis sie die Wand berühren. Der Wert ist die Breite des Lochs."
+        : "Lege die Außenbacken um das Bauteil und schiebe sie zusammen, bis sie anliegen. Der Wert ist die Länge."}</small>
     </div>
     <div class="cad-slider">
       <label for="caliperSlider">Messwert: <b id="caliperWert">${min} ${a.einheit}</b></label>
@@ -1546,8 +1637,11 @@ function messErgebnisZeigen(a) {
    Caliper (Durchmesser/Bohrung) bestaetigt direkt per Slider. */
 function messungSimulieren(a) {
   $("#messWerkzeugFlaeche").innerHTML = `
-    <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
-    <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>`;
+    <div class="fertigung-karte">
+      ${bild(sondeSVG(true))}
+      <p class="lade-label">${a.aktion} … <b id="messungProzent">0 %</b></p>
+      <div class="ladebalken"><div class="ladebalken-fuellung takt" id="messungFuellung"></div></div>
+    </div>`;
   let prozent = 0;
   clearInterval(messungTimer);
   messungTimer = setInterval(() => {
@@ -1610,8 +1704,12 @@ $("#zwillingszene-wrap").addEventListener("keydown", e => {
 });
 
 /* ---------- 4 — Geräte ---------- */
-function bild(inhalt) {
-  return `<div class="geraetebild"><svg viewBox="0 0 120 70" width="100%" height="58">${inhalt}</svg></div>`;
+/* gross = true: die Skizze skaliert mit der Kartenbreite statt mit fester
+   Hoehe von 58 px. Die Schrift in der Zeichnung war dadurch nur ca. 5 px
+   gross und nicht lesbar (Siemens-Feedback, Daniela). Siehe TODO.md. */
+function bild(inhalt, gross = false) {
+  const groesse = gross ? 'style="height:auto; display:block"' : 'height="58"';
+  return `<div class="geraetebild"><svg viewBox="0 0 120 70" width="100%" ${groesse}>${inhalt}</svg></div>`;
 }
 /* Drei eigene Screens statt einer gemeinsamen Sechs-Karten-Auswahl: CAD,
    3D-Druck-Test und Fraesen sind inhaltlich zu verschieden, um sie als
@@ -1624,43 +1722,66 @@ const cadUebernommen = [];
 // Live-Werte waehrend des Ziehens (nicht erst nach dem Bestaetigen) - genau
 // das war der Wunsch: der Koerper waechst schon beim Schieben, nicht erst
 // danach. null = noch nicht angefasst, zeigt Platzhalter-Kontur.
-const cadLiveWert = {durchmesser: null, bohrung: null, wandstaerke: null};
+const cadLiveWert = {laenge: null, bohrung: null, wandstaerke: null};
+const ZIELWERTE = Object.fromEntries(ANFORDERUNGEN.map(a => [a.id, a.ziel]));
 
-/* Siemens-Feedback 17.09.2026, Punkt 4: trotz Visualisierung nicht
-   verstaendlich, was gerade eingestellt wird. Vorher hatte nur der
-   Durchmesser eine Beschriftung, und die erschien erst nach dem Anfassen des
-   Reglers. Jetzt tragen alle drei Parameter von Anfang an eine feste
-   Beschriftung direkt am Bauteil (erst als "?", dann mit echtem Wert) -
-   siehe TODO.md. */
-function cadWireframeSVG() {
-  const d = cadLiveWert.durchmesser;
-  const b = cadLiveWert.bohrung;
-  const w = cadLiveWert.wandstaerke;
-  const dFaktor = d ? Math.max(.55, Math.min(1.5, d / 18)) : 1;
-  const bRadius = b ? Math.max(3, Math.min(14, 8 * (b / 6))) : 8;
-  const wDicke = w ? Math.max(2, Math.min(22, 8 * (w / 3))) : 7;
-  const wert = (v, einheit) => v ? `${Math.round(v)} ${einheit}` : "?";
+/* Gemeinsame Bauteil-Geometrie fuer CAD, 3D-Druck und Fraesen: derselbe
+   Quader mit Loch in der Mitte der Vorderseite, schraeg von vorne rechts oben
+   gesehen. Vorher hatte jeder Schritt seine eigene, andere Skizze und das Teil
+   wirkte jedes Mal anders (Siemens-Feedback, Daniela: "Loch fehlt", "vorhin
+   war das Loch in der Mitte"). Siehe TODO.md. */
+const TEIL = {oben: 16, unten: 50, mitte: 55, tiefeX: 10, tiefeY: 7, breite: 64, lochR: 8};
+function teilGeometrie(breite = TEIL.breite) {
+  const x0 = TEIL.mitte - breite / 2, x1 = TEIL.mitte + breite / 2;
+  const {oben, unten, tiefeX: tx, tiefeY: ty} = TEIL;
+  return {
+    x0, x1, oben, unten, breite, cx: TEIL.mitte, cy: (oben + unten) / 2,
+    vorne: `M${x0} ${oben} H${x1} V${unten} H${x0} Z`,
+    kontur: `M${x0} ${oben} L${x0 + tx} ${oben - ty} L${x1 + tx} ${oben - ty} L${x1} ${oben} ` +
+            `M${x1} ${oben} L${x1 + tx} ${oben - ty} L${x1 + tx} ${unten - ty} L${x1} ${unten}`,
+    oberseite: `M${x0} ${oben} L${x0 + tx} ${oben - ty} L${x1 + tx} ${oben - ty} L${x1} ${oben} Z`,
+    seite: `M${x1} ${oben} L${x1 + tx} ${oben - ty} L${x1 + tx} ${unten - ty} L${x1} ${unten} Z`
+  };
+}
+// Kreis als Pfad, damit er per evenodd aus einer Flaeche ausgestanzt werden kann.
+const lochPfad = (cx, cy, r) =>
+  `M${cx + r} ${cy} A${r} ${r} 0 1 0 ${cx - r} ${cy} A${r} ${r} 0 1 0 ${cx + r} ${cy} Z`;
+
+/* Siemens-Feedback: (1) trotz Visualisierung nicht verstaendlich, was gerade
+   eingestellt wird - alle drei Parameter tragen von Anfang an eine feste
+   Beschriftung am Bauteil (erst "?", dann der echte Wert). (2) Daniela: "Hier
+   wird der gesamte Koerper groesser, aber wir hatten ja nur die Laenge
+   ausgemessen" - es aendert sich jetzt nur noch die Laenge (Breite der
+   Vorderseite), Hoehe und Tiefe bleiben fest. Siehe TODO.md. */
+function cadWireframeSVG(werte = cadLiveWert) {
+  const l = werte.laenge, b = werte.bohrung, w = werte.wandstaerke;
+  const g = teilGeometrie(l ? TEIL.breite * (l / ZIELWERTE.laenge) : TEIL.breite);
+  const bRadius = b ? Math.max(3, Math.min(14, TEIL.lochR * (b / ZIELWERTE.bohrung))) : TEIL.lochR;
+  const wDicke = w ? Math.max(2, Math.min(22, 8 * (w / ZIELWERTE.wandstaerke))) : 7;
+  const gruen = "#009999";
+  const wert = v => v ? `${Math.round(v)} mm` : "?";
+  const linie = v => v ? gruen : "var(--linie)";
+  const text = v => v ? gruen : "var(--tinte-weich)";
+  const lochRand = bRadius * 0.71;
   return `
-    <g transform="translate(60,33) scale(${dFaktor.toFixed(2)}) translate(-60,-33)">
-      <rect x="20" y="16" width="80" height="34" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
-      <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-      <rect x="20" y="16" width="${wDicke.toFixed(1)}" height="34"
-        fill="${w ? "#009999" : "none"}" opacity="${w ? .5 : 1}"
-        stroke="${w ? "none" : "var(--linie)"}" stroke-width="1.2" ${w ? "" : 'stroke-dasharray="2 2"'}/>
-      <circle cx="60" cy="33" r="${bRadius.toFixed(1)}" fill="none"
-        stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="${b ? 2 : 1.4}" ${b ? "" : 'stroke-dasharray="2 2"'}/>
-    </g>
+    <rect x="${g.x0}" y="${g.oben}" width="${g.breite}" height="${g.unten - g.oben}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <path d="${g.kontur}" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+    <rect x="${g.x0}" y="${g.oben}" width="${wDicke}" height="${g.unten - g.oben}"
+      fill="${w ? gruen : "none"}" opacity="${w ? .5 : 1}"
+      stroke="${w ? "none" : "var(--linie)"}" stroke-width="1.2" ${w ? "" : 'stroke-dasharray="2 2"'}/>
+    <circle cx="${g.cx}" cy="${g.cy}" r="${bRadius.toFixed(1)}" fill="none"
+      stroke="${linie(b)}" stroke-width="${b ? 2 : 1.4}" ${b ? "" : 'stroke-dasharray="2 2"'}/>
     <!-- Wandstärke: Beschriftung oben links, Leader zur Kante -->
-    <line x1="22" y1="16" x2="14" y2="8" stroke="${w ? "#009999" : "var(--linie)"}" stroke-width="1"/>
-    <text x="2" y="7.5" font-size="6.2" fill="${w ? "#009999" : "var(--tinte-weich)"}">Wandstärke: ${wert(w, "mm")}</text>
+    <line x1="${g.x0 + 3}" y1="${g.oben}" x2="${Math.max(8, g.x0 - 4)}" y2="8" stroke="${linie(w)}" stroke-width="1"/>
+    <text x="2" y="7.5" font-size="6.2" fill="${text(w)}">Wandstärke: ${wert(w)}</text>
     <!-- Bohrung: Beschriftung oben rechts, Leader zur Bohrung -->
-    <line x1="66" y1="24" x2="90" y2="8" stroke="${b ? "#009999" : "var(--linie)"}" stroke-width="1"/>
-    <text x="118" y="7.5" font-size="6.2" fill="${b ? "#009999" : "var(--tinte-weich)"}" text-anchor="end">Bohrung: ${wert(b, "mm")}</text>
-    <!-- Durchmesser: Maßlinie unten, wie zuvor -->
-    <line x1="20" y1="60" x2="100" y2="60" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4" ${d ? "" : 'stroke-dasharray="2 2"'}/>
-    <line x1="20" y1="56" x2="20" y2="64" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4"/>
-    <line x1="100" y1="56" x2="100" y2="64" stroke="${d ? "#009999" : "var(--linie)"}" stroke-width="1.4"/>
-    <text x="60" y="69" font-size="6.5" fill="${d ? "#009999" : "var(--tinte-weich)"}" text-anchor="middle">⌀ Durchmesser: ${wert(d, "mm")}</text>
+    <line x1="${(g.cx + lochRand).toFixed(1)}" y1="${(g.cy - lochRand).toFixed(1)}" x2="92" y2="8" stroke="${linie(b)}" stroke-width="1"/>
+    <text x="118" y="7.5" font-size="6.2" fill="${text(b)}" text-anchor="end">Bohrung: ${wert(b)}</text>
+    <!-- Länge: Maßlinie unten -->
+    <line x1="${g.x0}" y1="57" x2="${g.x1}" y2="57" stroke="${linie(l)}" stroke-width="1.4" ${l ? "" : 'stroke-dasharray="2 2"'}/>
+    <line x1="${g.x0}" y1="53" x2="${g.x0}" y2="61" stroke="${linie(l)}" stroke-width="1.4"/>
+    <line x1="${g.x1}" y1="53" x2="${g.x1}" y2="61" stroke="${linie(l)}" stroke-width="1.4"/>
+    <text x="${g.cx}" y="67.5" font-size="6.5" fill="${text(l)}" text-anchor="middle">Länge: ${wert(l)}</text>
   `;
 }
 
@@ -1693,8 +1814,8 @@ function cadZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Übernimm die Maße ins CAD-Modell</p>
     <div class="fertigung-karte">
-      <div id="cadKoerper">${bild(cadWireframeSVG())}</div>
-      <small>${naechste ? "Der Körper wächst mit, während du den Wert einstellst." : "Alle Maße übernommen."}</small>
+      <div id="cadKoerper">${bild(cadWireframeSVG(), true)}</div>
+      <small>${naechste ? "Das Bauteil passt sich an, während du den Wert einstellst." : "Alle Maße übernommen."}</small>
     </div>
     ${steuerung}
     <div class="packliste">
@@ -1704,6 +1825,7 @@ function cadZeichnen() {
         : `<p class="leer">Noch nichts übernommen.</p>`}
     </div>
     ${!naechste ? `<button class="orderknopf" id="cadWeiterBtn" type="button">3D-Modell fertig ✓</button>` : ""}`;
+  nachOben("geraete");
 
   const slider = $("#cadSlider");
   if (slider) {
@@ -1711,7 +1833,7 @@ function cadZeichnen() {
       const wert = Number(slider.value);
       cadLiveWert[naechste.id] = wert;
       $("#cadSliderWert").textContent = `${wert} ${naechste.einheit}`;
-      $("#cadKoerper").innerHTML = bild(cadWireframeSVG());
+      $("#cadKoerper").innerHTML = bild(cadWireframeSVG(), true);
       $("#cadUebernehmenBtn").disabled = wert !== naechste.ziel;
     });
   }
@@ -1727,24 +1849,38 @@ function cadZeichnen() {
   if (weiter) weiter.addEventListener("click", () => { fertigungStufe = "druck"; fertigungZeichnen(); });
 }
 
-/* Druckrahmen + das Bauteil selbst, das sich Schicht fuer Schicht von unten
-   nach oben fuellt - synchron zum echten Fortschrittswert (nicht nur Deko
-   wie der Fraes-Loop). Dieselbe Kontur wie im CAD-Wireframe, damit klar
-   bleibt: das ist dasselbe Bauteil, das gerade konfiguriert wurde. Siehe
-   TODO.md. */
+/* Druckplatte + dasselbe Bauteil wie im CAD (Quader mit Loch), das sich Schicht
+   fuer Schicht von unten nach oben einfaerbt - synchron zum echten
+   Fortschrittswert. Der ganze Quader (Vorder-, Ober- und Seitenflaeche)
+   faerbt sich, das Loch bleibt offen. Statt der frueheren grauen Quadrate
+   ("Hoerner") faehrt jetzt eine beschriftete Duese an der aktuellen
+   Schichthoehe hin und her (Siemens-Feedback, Daniela). Siehe TODO.md. */
 function druckKoerperSVG(prozent, farbe = "#009999") {
-  const koerperHoehe = 34, koerperOben = 16;
-  const gefuellt = (prozent / 100) * koerperHoehe;
-  const fuellYStart = koerperOben + (koerperHoehe - gefuellt);
+  const g = teilGeometrie();
+  const gesamt = g.unten - (g.oben - TEIL.tiefeY);
+  const gefuellt = (prozent / 100) * gesamt;
+  const fuellY = g.unten - gefuellt;
+  const loch = lochPfad(g.cx, g.cy, TEIL.lochR);
+  const nx = g.cx + g.breite / 2 * 0.8 * Math.sin(prozent / 100 * 18);
+  const duese = prozent < 100 ? `
+    <path d="M${nx - 4} ${fuellY - 9} H${nx + 4} L${nx + 1.6} ${fuellY} H${nx - 1.6} Z" fill="#4A5C6E"/>
+    <rect x="${nx - 3}" y="${fuellY - 14}" width="6" height="5" fill="#8A8AA3"/>
+    <line x1="${g.x0 - 4}" y1="${fuellY}" x2="${g.x1 + 14}" y2="${fuellY}" stroke="#F59B3E" stroke-width="1.6"/>
+    <line x1="112" y1="9" x2="${(nx + 3).toFixed(1)}" y2="${Math.max(3, fuellY - 12).toFixed(1)}" stroke="var(--linie)" stroke-width="1"/>
+    <text x="118" y="7.5" font-size="6" fill="var(--tinte-weich)" text-anchor="end">Düse</text>` : "";
   return `
-    <defs><clipPath id="druckClip"><rect x="20" y="${fuellYStart.toFixed(1)}" width="80" height="${gefuellt.toFixed(1)}"/></clipPath></defs>
-    <rect x="20" y="50" width="70" height="8" rx="2" fill="#4A5C6E"/>
-    <rect x="26" y="10" width="8" height="8" fill="#8A8AA3"/>
-    <rect x="86" y="10" width="8" height="8" fill="#8A8AA3"/>
-    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
-    <path d="M20 16 L30 9 L110 9 L100 16 M100 16 L110 9 L110 43 L100 50" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
-    <rect x="20" y="${koerperOben}" width="80" height="${koerperHoehe}" fill="${farbe}" opacity=".6" clip-path="url(#druckClip)"/>
-    ${prozent < 100 ? `<line x1="16" y1="${fuellYStart.toFixed(1)}" x2="104" y2="${fuellYStart.toFixed(1)}" stroke="#F59B3E" stroke-width="2"/>` : ""}
+    <defs><clipPath id="druckClip"><rect x="0" y="${fuellY.toFixed(1)}" width="120" height="${gefuellt.toFixed(1)}"/></clipPath></defs>
+    <rect x="12" y="50" width="86" height="6" rx="2" fill="#4A5C6E"/>
+    <text x="55" y="64.5" font-size="6" fill="var(--tinte-weich)" text-anchor="middle">Druckplatte</text>
+    <g clip-path="url(#druckClip)" fill="${farbe}">
+      <path d="${g.vorne} ${loch}" fill-rule="evenodd" fill-opacity=".6"/>
+      <path d="${g.oberseite}" fill-opacity=".4"/>
+      <path d="${g.seite}" fill-opacity=".8"/>
+    </g>
+    <rect x="${g.x0}" y="${g.oben}" width="${g.breite}" height="${g.unten - g.oben}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <path d="${g.kontur}" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+    <circle cx="${g.cx}" cy="${g.cy}" r="${TEIL.lochR}" fill="none" stroke="#8A8AA3" stroke-width="1.6"/>
+    ${duese}
   `;
 }
 
@@ -1754,7 +1890,7 @@ function druckKoerperSVG(prozent, farbe = "#009999") {
    faerbt anschliessend das wachsende Druckmodell ein. Siehe TODO.md. */
 const DRUCK_FARBEN = [
   {id: "schwarz", label: "Schwarz", hex: "#2B2B33"},
-  {id: "gruen", label: "Signalgrün", hex: "#009999"},
+  {id: "gruen", label: "Grün", hex: "#009999"},
   {id: "orange", label: "Orange", hex: "#F59B3E"}
 ];
 const DRUCK_MATERIALIEN = [
@@ -1767,7 +1903,10 @@ let druckFarbe = null, druckMaterial = null;
 function druckAuswahlZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Prototyp im 3D-Drucker testen</p>
-    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(druckFarbe ? 100 : 0, druckFarbe?.hex))}</div></div>
+    <div class="fertigung-karte">
+      <div id="druckKoerper">${bild(druckKoerperSVG(druckFarbe ? 100 : 0, druckFarbe?.hex), true)}</div>
+      <small>Der 3D-Drucker baut den Prototyp Schicht für Schicht aus Kunststoff auf.</small>
+    </div>
     <p class="lade-label" style="margin-top:0; text-align:left">Farbe wählen:</p>
     <div class="pillen" id="druckFarbenAuswahl">
       ${DRUCK_FARBEN.map(f => `<button class="pille farb-pille ${druckFarbe?.id === f.id ? "treffer" : ""}" type="button" data-id="${f.id}" style="--farbe:${f.hex}">${f.label}</button>`).join("")}
@@ -1799,17 +1938,21 @@ let druckTimer = null;
 function druckZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Prototyp im 3D-Drucker testen</p>
-    <div class="fertigung-karte"><div id="druckKoerper">${bild(druckKoerperSVG(0, druckFarbe.hex))}</div></div>
+    <div class="fertigung-karte">
+      <div id="druckKoerper">${bild(druckKoerperSVG(0, druckFarbe.hex), true)}</div>
+      <small>Der 3D-Drucker baut den Prototyp Schicht für Schicht aus Kunststoff auf.</small>
+    </div>
     <small>${druckFarbe.label} · ${druckMaterial.label}</small>
     <div class="ladebalken"><div class="ladebalken-fuellung takt" id="druckFuellung"></div></div>
     <p class="lade-label" id="druckLabel">Prototyp wird gedruckt … <b id="druckProzent">0 %</b></p>`;
+  nachOben("geraete");
   let prozent = 0;
   clearInterval(druckTimer);
   druckTimer = setInterval(() => {
     prozent = Math.min(100, prozent + 4 + Math.random() * 5);
     $("#druckFuellung").style.width = prozent + "%";
     $("#druckProzent").textContent = Math.round(prozent) + " %";
-    $("#druckKoerper").innerHTML = bild(druckKoerperSVG(prozent, druckFarbe.hex));
+    $("#druckKoerper").innerHTML = bild(druckKoerperSVG(prozent, druckFarbe.hex), true);
     if (prozent >= 100) {
       clearInterval(druckTimer);
       $("#druckLabel").textContent = "Fertig.";
@@ -1824,33 +1967,39 @@ function druckZeichnen() {
   }, 140);
 }
 
-/* Vier leicht unterschiedliche Frames statt echter Fotos (Lizenz- und
-   Stilbruch-frei, passend zu den uebrigen SVG-Icons) - schnell durchgetaktet
-   wirkt wie ein kurzer Prozess-Loop, nicht wie ein Standbild. */
-const FRAES_FRAMES = [
-  `<rect x="30" y="8" width="10" height="26" fill="#8A8AA3"/>
-   <rect x="24" y="34" width="22" height="10" rx="2" fill="#4A5C6E"/>
-   <rect x="32" y="42" width="6" height="12" fill="#101822"/>
-   <rect x="14" y="54" width="70" height="12" rx="2" fill="#4A5C6E"/>`,
-  `<rect x="30" y="12" width="10" height="30" fill="#8A8AA3"/>
-   <rect x="24" y="42" width="22" height="10" rx="2" fill="#4A5C6E"/>
-   <rect x="32" y="50" width="6" height="8" fill="#101822"/>
-   <rect x="14" y="54" width="70" height="12" rx="2" fill="#4A5C6E"/>
-   <circle cx="42" cy="52" r="2" fill="#009999"/>`,
-  `<rect x="30" y="8" width="10" height="26" fill="#8A8AA3"/>
-   <rect x="24" y="34" width="22" height="10" rx="2" fill="#4A5C6E"/>
-   <rect x="32" y="42" width="6" height="12" fill="#101822"/>
-   <rect x="14" y="54" width="70" height="12" rx="2" fill="#4A5C6E"/>
-   <rect x="20" y="56" width="22" height="4" rx="1" fill="#101822" opacity=".5"/>
-   <circle cx="48" cy="48" r="2" fill="#009999"/><circle cx="54" cy="44" r="1.6" fill="#F59B3E"/>`,
-  `<rect x="30" y="12" width="10" height="30" fill="#8A8AA3"/>
-   <rect x="24" y="42" width="22" height="10" rx="2" fill="#4A5C6E"/>
-   <rect x="32" y="50" width="6" height="8" fill="#101822"/>
-   <rect x="14" y="54" width="70" height="12" rx="2" fill="#4A5C6E"/>
-   <rect x="20" y="56" width="40" height="4" rx="1" fill="#101822" opacity=".5"/>
-   <circle cx="58" cy="42" r="2" fill="#009999"/><circle cx="64" cy="38" r="1.6" fill="#F59B3E"/>
-   <circle cx="46" cy="50" r="1.4" fill="#009999"/>`
-];
+/* Fraes-Skizze: dasselbe Bauteil wie in CAD und 3D-Druck (Quader mit Loch) liegt
+   auf dem Fraestisch, der Fraeser sitzt MITTIG ueber der Bohrstelle, faehrt
+   ein und aus, das Loch entsteht nach und nach, dazu kleine Spaene. Vorher
+   waren es generische Icons ohne Bauteil, der Fraeser sass links von der
+   Mitte und wirkte wie "links gebohrt" (Siemens-Feedback, Daniela). p = 0..1
+   ist der Fortschritt des Fraesvorgangs. Siehe TODO.md. */
+function fraesSVG(p) {
+  const g = teilGeometrie();
+  const r = TEIL.lochR * Math.min(1, Math.max(0, (p - 0.1) / 0.8));
+  const spitze = 8 + (0.5 + 0.5 * Math.sin(p * 16)) * (g.cy - 8);
+  const spaene = p > 0.08 && p < 0.95 ? [0, 1, 2].map(i => {
+    const sx = g.cx + 10 * Math.sin(p * 40 + i * 2.1);
+    const sy = g.cy + 8 * Math.cos(p * 33 + i * 3.3);
+    return `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="1.4" fill="${i === 1 ? "#F59B3E" : "#009999"}"/>`;
+  }).join("") : "";
+  return `
+    <rect x="12" y="50" width="86" height="6" rx="2" fill="#4A5C6E"/>
+    <text x="55" y="64.5" font-size="6" fill="var(--tinte-weich)" text-anchor="middle">Frästisch</text>
+    <path d="${g.vorne}" fill="#EEF1F4"/>
+    <path d="${g.oberseite}" fill="#E0E5EA"/>
+    <path d="${g.seite}" fill="#D2D8DE"/>
+    <rect x="${g.x0}" y="${g.oben}" width="${g.breite}" height="${g.unten - g.oben}" rx="3" fill="none" stroke="#8A8AA3" stroke-width="2"/>
+    <path d="${g.kontur}" fill="none" stroke="#8A8AA3" stroke-width="1.4"/>
+    ${r > 0.3 ? `<circle cx="${g.cx}" cy="${g.cy}" r="${r.toFixed(1)}" fill="#fff" stroke="#8A8AA3" stroke-width="1.6"/>` : ""}
+    <rect x="${g.cx - 3}" y="${(spitze - 20).toFixed(1)}" width="6" height="14" rx="1" fill="#8A8AA3"/>
+    <rect x="${g.cx - 2}" y="${(spitze - 6).toFixed(1)}" width="4" height="6" fill="#4A5C6E"/>
+    ${spaene}
+    <line x1="14" y1="9" x2="${g.cx - 3}" y2="${Math.max(4, spitze - 10).toFixed(1)}" stroke="var(--linie)" stroke-width="1"/>
+    <text x="2" y="7.5" font-size="6" fill="var(--tinte-weich)">Fräser</text>
+    <line x1="112" y1="9" x2="${g.x1 + 8}" y2="20" stroke="var(--linie)" stroke-width="1"/>
+    <text x="118" y="7.5" font-size="6" fill="var(--tinte-weich)" text-anchor="end">Werkstück</text>
+  `;
+}
 let fraesFrameTimer = null;
 
 /* Siemens-Feedback 17.09.2026, Punkt 6: Fraesen lief komplett automatisch
@@ -1881,14 +2030,14 @@ function fraesenAuswahlZeichnen() {
   const aktuell = fraesGeschwindigkeit ?? min;
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Bauteil auf der Fräsmaschine fertigen</p>
-    <div class="fertigung-karte" id="fraesKarte">${bild(FRAES_FRAMES[0])}</div>
+    <div class="fertigung-karte" id="fraesKarte">${bild(fraesSVG(0), true)}</div>
     <div class="cad-slider">
       <label for="fraesHebel">Vorschubgeschwindigkeit: <b id="fraesHebelWert">${aktuell} mm/min</b></label>
       <input type="range" id="fraesHebel" class="fraes-hebel" min="${min}" max="${max}" step="1" value="${aktuell}"
         style="background: ${hitzeVerlaufCss(min, max, FRAES_ZIEL_GESCHWINDIGKEIT)}">
       <button class="orderknopf" type="button" id="fraesStartBtn" ${aktuell === FRAES_ZIEL_GESCHWINDIGKEIT ? "" : "disabled"}>Fräsen starten</button>
     </div>
-    <small>Hebel vorsichtig auf die richtige Geschwindigkeit ziehen — grün ist genau richtig, rot ist zu schnell oder zu langsam.</small>`;
+    <small>Der Fräser trägt Material ab, bis das Bauteil die Maße aus dem CAD-Modell hat. Hebel vorsichtig auf die richtige Geschwindigkeit ziehen — grün ist genau richtig, rot ist zu schnell oder zu langsam.</small>`;
   $("#fraesHebel").addEventListener("input", () => {
     fraesGeschwindigkeit = Number($("#fraesHebel").value);
     $("#fraesHebelWert").textContent = `${fraesGeschwindigkeit} mm/min`;
@@ -1900,29 +2049,35 @@ function fraesenAuswahlZeichnen() {
 function fraesenZeichnen() {
   $("#fertigungInhalt").innerHTML = `
     <p class="frage">Bauteil auf der Fräsmaschine fertigen</p>
-    <div class="fertigung-karte" id="fraesKarte">${bild(FRAES_FRAMES[0])}</div>
+    <div class="fertigung-karte" id="fraesKarte">${bild(fraesSVG(0), true)}</div>
     <div class="ladebalken"><div class="ladebalken-fuellung" id="fraesFuellung"></div></div>
     <p class="lade-label" id="fraesLabel">Ersatzteil wird hergestellt …</p>`;
-  let frame = 0;
+  nachOben("geraete");
+  const DAUER = 3400, start = performance.now();
   clearInterval(fraesFrameTimer);
   fraesFrameTimer = setInterval(() => {
-    frame = (frame + 1) % FRAES_FRAMES.length;
-    $("#fraesKarte").innerHTML = bild(FRAES_FRAMES[frame]);
-  }, 260);
+    const p = Math.min(1, (performance.now() - start) / DAUER);
+    $("#fraesKarte").innerHTML = bild(fraesSVG(p), true);
+  }, 100);
   const audio = $("#fraesAudio");
   if (audio) { audio.currentTime = 0; const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
   setTimeout(() => { $("#fraesFuellung").style.width = "100%"; }, 50);
   setTimeout(() => {
     clearInterval(fraesFrameTimer);
+    // Das fertige Teil zeigt wieder alle drei Masse aus dem CAD-Modell - so
+    // kommt auch die Wandstaerke sichtbar zurueck (Siemens-Feedback, Daniela).
+    $("#fraesKarte").innerHTML = bild(cadWireframeSVG(ZIELWERTE), true) +
+      "<small>Alle drei Maße stimmen mit dem CAD-Modell überein.</small>";
     $("#fraesLabel").textContent = "Bauteil fertig ✓";
     fertigungAbschliessen();
-  }, 3400);
+  }, DAUER);
 }
 
 function fertigungZeichnen() {
   if (fertigungStufe === "cad") cadZeichnen();
   else if (fertigungStufe === "druck") druckAuswahlZeichnen();
   else if (fertigungStufe === "fraesen") fraesenAuswahlZeichnen();
+  nachOben("geraete");
 }
 fertigungZeichnen();
 
@@ -1954,11 +2109,18 @@ function fertigungAbschliessen() {
 /* label = natuerlichsprachiger Text fuer Lenas Chat-Nachrichten, code = was
    tatsaechlich auf dem Block steht - Funktions-Syntax statt Fliesstext, das
    war der eigentliche Nutzer-Wunsch ("sieht nicht nach Coden aus"). */
+/* kommentar = kurze Erklaerung im Stil eines Code-Kommentars (Siemens-Feedback,
+   Daniela: "Was bedeutet Sicherheitscheck durchfuehren? Wer fuehrt ihn
+   durch?"). Siehe TODO.md. */
 const CODE_BLOECKE = [
-  {id: "sicherheit", label: "Sicherheitscheck durchführen", code: "sicherheitscheck()"},
-  {id: "kalibrieren", label: "Sensor kalibrieren", code: "sensor.kalibrieren()"},
-  {id: "antrieb", label: "Antrieb starten", code: "antrieb.starten()"},
-  {id: "melden", label: "Betriebsbereit melden", code: "status.melden()"}
+  {id: "sicherheit", label: "Sicherheitscheck durchführen", code: "sicherheitscheck()",
+   kommentar: "Schutztüren und Not-Aus prüfen: Ist die Anlage gefahrlos startklar?"},
+  {id: "kalibrieren", label: "Sensor kalibrieren", code: "sensor.kalibrieren()",
+   kommentar: "Sensor auf den Nullpunkt einstellen"},
+  {id: "antrieb", label: "Antrieb starten", code: "antrieb.starten()",
+   kommentar: "Motor anfahren"},
+  {id: "melden", label: "Betriebsbereit melden", code: "status.melden()",
+   kommentar: "Steuerung meldet: Anlage läuft"}
 ];
 // Feste, gemischte Anzeige-Reihenfolge (nicht die Loesung selbst).
 const CODE_BLOECKE_ANZEIGE = [CODE_BLOECKE[2], CODE_BLOECKE[0], CODE_BLOECKE[3], CODE_BLOECKE[1]];
@@ -1979,14 +2141,15 @@ function codeZeichnen() {
   // Block ("sicherheitscheck()") ist fuer sehende Nutzer*innen gedacht,
   // Screenreader sollen weiterhin den verstaendlichen Text vorlesen. Siehe
   // TODO.md.
+  const kommentar = b => `<span class="code-kommentar">// ${b.kommentar}</span>`;
   $("#codeTray").innerHTML = offen.map(b => `
-    <button class="code-block" type="button" data-id="${b.id}" aria-label="${b.label}">${codeText(b)}</button>
+    <button class="code-block" type="button" data-id="${b.id}" aria-label="${b.label}: ${b.kommentar}">${codeText(b)}${kommentar(b)}</button>
   `).join("");
   const voll = codeErledigt.length === CODE_BLOECKE.length;
   $("#codeZaehler").textContent = `Programm: ${codeErledigt.length} von ${CODE_BLOECKE.length} Blöcken`;
   $("#codeZaehler").classList.toggle("voll", voll);
   $("#codeStapel").innerHTML = codeErledigt.length
-    ? codeErledigt.map(b => `<div class="code-block" aria-label="${b.label}">${codeText(b)}</div>`).join("")
+    ? codeErledigt.map(b => `<div class="code-block" aria-label="${b.label}: ${b.kommentar}">${codeText(b)}${kommentar(b)}</div>`).join("")
     : `<p class="leer">Tippe oder ziehe die Code-Blöcke hier rein.</p>`;
   codeZiehenAktivieren();
   // Lena begleitet auch hier per Chat statt einer stillen Ueberschrift -
@@ -2116,7 +2279,7 @@ const DEVMENU_ZIELE = {
   cad() {
     devAufraeumen();
     cadUebernommen.length = 0;
-    cadLiveWert.durchmesser = null; cadLiveWert.bohrung = null; cadLiveWert.wandstaerke = null;
+    cadLiveWert.laenge = null; cadLiveWert.bohrung = null; cadLiveWert.wandstaerke = null;
     fertigungStufe = "cad";
     setzeZustand("geraete"); oeffne("geraete");
     fertigungZeichnen();
