@@ -95,11 +95,10 @@
     padding: 20px 20px 24px; overflow-y: auto; background: var(--weiss);
   }
   .einstieg[hidden] { display: none !important; }
-  .eyebrow {
-    font-size: .72rem; font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--orange-dunkel); margin-bottom: 12px; min-height: 1.2em;
-  }
-  .einstieg h1, .eyebrow { font-family: var(--schrift-titel); }
+  /* Weniger Text im Intro (Nutzer-Feedback): Eyebrow und Begruessungssatz
+     gestrichen, dafuer klein das SIEMENS-Logo oben rechts. Siehe TODO.md. */
+  .einstieg-kopf { text-align: right; margin: -2px 0 12px; line-height: 0; }
+  .einstieg h1 { font-family: var(--schrift-titel); }
   .einstieg h1 {
     font-size: 1.42rem; line-height: 1.22; margin: 0 0 16px;
     font-weight: 600; letter-spacing: 0; text-wrap: balance;
@@ -335,8 +334,10 @@
      Rahmen dafuer. */
   .zwilling-stage { position: relative; }
   .fehler-gefunden {
-    position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 14px 16px; border: 2px solid #C03A57; border-radius: 0 0 12px 12px;
+    /* Oben statt unten verankert: der Kasten waechst beim Hineintippen des Textes
+       jetzt von oben nach unten (Nutzer-Feedback), vorher von unten nach oben. */
+    position: absolute; left: 0; right: 0; top: 0;
+    padding: 14px 16px; border: 2px solid #C03A57; border-radius: 12px;
     background: rgba(255,255,255,.97);
   }
   .fehler-titel { margin: 0 0 6px; font-size: 1.1rem; font-weight: 900; letter-spacing: .04em; color: #C03A57; }
@@ -375,15 +376,6 @@
   .geraete-ja:hover { background: #1E7D7A; }
   .geraete-hinweis { text-align: center; font-size: .74rem; color: var(--grau); margin: 8px 0 0; }
   .geraete-fertig { text-align: center; color: var(--tinte-weich); font-size: .92rem; padding: 22px 0; }
-
-  .packliste {
-    margin-top: 14px; border: 1px solid var(--linie); border-radius: 11px; padding: 11px 13px;
-  }
-  .packliste .zaehler { font-size: .82rem; font-weight: 800; color: var(--grau); }
-  .packliste .zaehler.voll { color: var(--gruen); }
-  .packliste ul { margin: 7px 0 0; padding-left: 18px; }
-  .packliste li { font-size: .92rem; line-height: 1.5; }
-  .packliste .leer { margin: 6px 0 0; font-size: .88rem; color: var(--grau); }
 
   /* ---------- Programmieren (ersetzt Reihenfolge) ---------- */
   /* Scratch-artige Bloecke statt Pillen. Tippen bleibt die Hauptmechanik
@@ -604,6 +596,23 @@
     /* Das Test-Sprungmenue schwebte auf dem Handy ueber dem Inhalt (z. B. ueber
        dem Messwert) - auf Handy-Breite ausgeblendet. */
     html:not(.eingebettet) .devmenu { display: none; }
+    /* Die Bildschirmhoehe besser nutzen (Nutzer-Feedback: alles klebt oben,
+       die untere Haelfte bleibt leer): etwas groessere Schrift (fast alles ist
+       in rem gesetzt, waechst also mit), mehr Innenabstand, und die Skizzen
+       skalieren mit der Breite statt mit fester Hoehe. Siehe TODO.md. */
+    html:not(.eingebettet) { font-size: 118%; }
+    html:not(.eingebettet) .inhalt { padding: 20px 18px 28px; }
+    html:not(.eingebettet) .geraetebild svg { height: auto; }
+    html:not(.eingebettet) .fertigung-karte { max-width: none; }
+    /* Intro auf dem Handy: groessere Ueberschrift, der Button samt Ton-Hinweis
+       sitzt unten am Bildschirm (Daumen-Reichweite) statt direkt unter dem
+       Text. Der Button wird per margin-top:auto nach unten geschoben, der
+       Text darueber bleibt beim Hineintippen stabil an seinem Platz. */
+    html:not(.eingebettet) .einstieg { display: flex; flex-direction: column; }
+    html:not(.eingebettet) .einstieg > * { flex-shrink: 0; }
+    html:not(.eingebettet) .einstieg h1 { font-size: 1.9rem; margin-bottom: 20px; }
+    html:not(.eingebettet) .einstieg .los { margin-top: auto; align-self: flex-start; }
+    html:not(.eingebettet) .einstieg .ton-hinweis { margin-bottom: 8px; }
   }
 
   /* ---------- Eingebettete Darstellung (siehe Skript im <head>) ---------- */
@@ -631,9 +640,8 @@
     <div class="status"><span>08:10</span><span class="rechts">▮▮▮ 78 %</span></div>
 
     <div class="einstieg" id="einstieg">
-      <div class="eyebrow" id="e0"></div>
+      <div class="einstieg-kopf"><span class="logoklein"></span></div>
       <h1 id="e1"></h1>
-      <p id="e2"></p>
       <p id="e3"></p>
       <p id="e4"></p>
       <p id="e5"></p>
@@ -921,9 +929,7 @@ function nachOben(appName) {
    Ein Klick irgendwohin ueberspringt alles - und in einem versteckten Tab
    (dort werden Timer gedrosselt) steht der Text sofort komplett da. */
 const EINSTIEGSTEXT = [
-  ["#e0", "Das 10-Minuten-Praktikum bei Siemens", 16],
-  ["#e1", "Ein Greifarm streikt — und 20.000 Flaschen warten.", 20],
-  ["#e2", "Willkommen zu deinem Praktikum bei Siemens.", 12],
+  ["#e1", "20.000 Flaschen warten.", 20],
   ["#e3", "Bei <b>ZISCH Getränke</b> steht die Anlage still — ein Greifarm hat sich festgefahren.", 11],
   ["#e4", "<b>Um 13 Uhr müssen die Kolleg*innen abfüllen können.</b>", 11],
   ["#e5", "Kannst du helfen?", 16]
@@ -1480,13 +1486,13 @@ function zwillingLoesen() {
    ein Durchmesser passt nur zu runden Teilen (Siemens-Feedback, Daniela:
    "wir hatten ja nur die Laenge ausgemessen"). Siehe TODO.md. */
 const ANFORDERUNGEN = [
-  {id: "laenge", label: "Länge", wert: "18 mm", aktion: "Die Länge wird ermittelt",
+  {id: "laenge", label: "Länge", wert: "18 mm", aktion: "Die Länge wird ermittelt",
    genitiv: "der Länge", artikel: "die Länge", akkusativ: "die Länge",
    ziel: 18, bereich: [10, 26], einheit: "mm"},
-  {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
+  {id: "bohrung", label: "Bohrungsmaß", wert: "6 mm", aktion: "Das Bohrungsmaß wird ermittelt",
    genitiv: "des Bohrungsmaßes", artikel: "das Bohrungsmaß", akkusativ: "das Bohrungsmaß",
    ziel: 6, bereich: [2, 12], einheit: "mm"},
-  {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Ultraschall läuft durch die Wand",
+  {id: "wandstaerke", label: "Wandstärke", wert: "3 mm", aktion: "Ultraschall läuft durch die Wand",
    genitiv: "der Wandstärke", artikel: "die Wandstärke", akkusativ: "die Wandstärke",
    ziel: 3, bereich: [1, 8], einheit: "mm"}
 ];
@@ -1605,13 +1611,13 @@ function zeigeMessWerkzeug(a) {
         : "Lege die Außenbacken um das Bauteil und schiebe sie zusammen, bis sie anliegen. Der Wert ist die Länge."}</small>
     </div>
     <div class="cad-slider">
-      <label for="caliperSlider">Messwert: <b id="caliperWert">${min} ${a.einheit}</b></label>
+      <label for="caliperSlider">Messwert: <b id="caliperWert">${min} ${a.einheit}</b></label>
       <input type="range" id="caliperSlider" min="${min}" max="${max}" step="1" value="${min}">
       <button class="orderknopf" type="button" id="caliperUebernehmenBtn" disabled>Wert übernehmen ✓</button>
     </div>`;
   $("#caliperSlider").addEventListener("input", () => {
     const wert = Number($("#caliperSlider").value);
-    $("#caliperWert").textContent = `${wert} ${a.einheit}`;
+    $("#caliperWert").textContent = `${wert} ${a.einheit}`;
     $("#caliperKoerper").innerHTML = bild(caliperSVG(wert, a));
     $("#caliperUebernehmenBtn").disabled = wert !== a.ziel;
   });
@@ -1623,7 +1629,7 @@ function zeigeMessWerkzeug(a) {
    und Sonden-Fortschritt enden hier gemeinsam). Siehe TODO.md. */
 function messErgebnisZeigen(a) {
   $("#messWerkzeugFlaeche").innerHTML = `
-    <p class="lade-label">Messergebnis ${a.label}: <b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></p>`;
+    <p class="lade-label">Messergebnis ${a.label}: <span style="white-space:nowrap"><b>${a.wert}</b> <b style="color:var(--gruen)">✓</b></span></p>`;
   setTimeout(() => {
     anforderungenErfasst.push(a);
     anforderungenZeichnen();
@@ -1804,7 +1810,7 @@ function cadZeichnen() {
     steuerung = `
       <div class="cad-slider">
         <label for="cadSlider">Ziel laut Analyse: <b>${naechste.wert}</b> — stelle den Wert ein:
-          <b id="cadSliderWert">${aktuell} ${naechste.einheit}</b></label>
+          <b id="cadSliderWert">${aktuell} ${naechste.einheit}</b></label>
         <input type="range" id="cadSlider" min="${min}" max="${max}" step="1" value="${aktuell}">
         <button class="orderknopf" type="button" id="cadUebernehmenBtn" disabled>Übernehmen ✓</button>
       </div>`;
@@ -1818,12 +1824,6 @@ function cadZeichnen() {
       <small>${naechste ? "Das Bauteil passt sich an, während du den Wert einstellst." : "Alle Maße übernommen."}</small>
     </div>
     ${steuerung}
-    <div class="packliste">
-      <div class="zaehler ${naechste ? "" : "voll"}">Parameter: ${cadUebernommen.length} von ${ANFORDERUNGEN.length}</div>
-      ${cadUebernommen.length
-        ? `<ul>${cadUebernommen.map(a => `<li>${a.label}: ${a.wert}</li>`).join("")}</ul>`
-        : `<p class="leer">Noch nichts übernommen.</p>`}
-    </div>
     ${!naechste ? `<button class="orderknopf" id="cadWeiterBtn" type="button">3D-Modell fertig ✓</button>` : ""}`;
   nachOben("geraete");
 
@@ -1832,7 +1832,7 @@ function cadZeichnen() {
     slider.addEventListener("input", () => {
       const wert = Number(slider.value);
       cadLiveWert[naechste.id] = wert;
-      $("#cadSliderWert").textContent = `${wert} ${naechste.einheit}`;
+      $("#cadSliderWert").textContent = `${wert} ${naechste.einheit}`;
       $("#cadKoerper").innerHTML = bild(cadWireframeSVG(), true);
       $("#cadUebernehmenBtn").disabled = wert !== naechste.ziel;
     });
@@ -2032,7 +2032,7 @@ function fraesenAuswahlZeichnen() {
     <p class="frage">Bauteil auf der Fräsmaschine fertigen</p>
     <div class="fertigung-karte" id="fraesKarte">${bild(fraesSVG(0), true)}</div>
     <div class="cad-slider">
-      <label for="fraesHebel">Vorschubgeschwindigkeit: <b id="fraesHebelWert">${aktuell} mm/min</b></label>
+      <label for="fraesHebel">Vorschubgeschwindigkeit: <b id="fraesHebelWert">${aktuell} mm/min</b></label>
       <input type="range" id="fraesHebel" class="fraes-hebel" min="${min}" max="${max}" step="1" value="${aktuell}"
         style="background: ${hitzeVerlaufCss(min, max, FRAES_ZIEL_GESCHWINDIGKEIT)}">
       <button class="orderknopf" type="button" id="fraesStartBtn" ${aktuell === FRAES_ZIEL_GESCHWINDIGKEIT ? "" : "disabled"}>Fräsen starten</button>
@@ -2040,7 +2040,7 @@ function fraesenAuswahlZeichnen() {
     <small>Der Fräser trägt Material ab, bis das Bauteil die Maße aus dem CAD-Modell hat. Hebel vorsichtig auf die richtige Geschwindigkeit ziehen — grün ist genau richtig, rot ist zu schnell oder zu langsam.</small>`;
   $("#fraesHebel").addEventListener("input", () => {
     fraesGeschwindigkeit = Number($("#fraesHebel").value);
-    $("#fraesHebelWert").textContent = `${fraesGeschwindigkeit} mm/min`;
+    $("#fraesHebelWert").textContent = `${fraesGeschwindigkeit} mm/min`;
     $("#fraesStartBtn").disabled = fraesGeschwindigkeit !== FRAES_ZIEL_GESCHWINDIGKEIT;
   });
   $("#fraesStartBtn").addEventListener("click", fraesenZeichnen);
