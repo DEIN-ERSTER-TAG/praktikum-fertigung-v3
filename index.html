@@ -1113,15 +1113,43 @@ const LENA_ZWILLING_UNTERTITEL = [
 ];
 const LENA_ZWILLING_ENDE_MS = 22000;
 
-function anrufOeffnen() {
+/* Klingelton zentral steuern. Vorher lief er als Endlosschleife, bis jemand
+   "Annehmen" drueckte - ein vergessener Tab klingelte endlos weiter (Nutzer
+   hoerte ihn im Hintergrund, und in einer Klasse mit vielen Handys waere das
+   genauso). Jetzt: hoechstens KLINGELTON_MAX_MS, im Hintergrund-Tab pausiert er
+   und laeuft beim Zurueckkommen weiter, solange es noch klingelt. Siehe
+   TODO.md. */
+const KLINGELTON_MAX_MS = 30000;
+let klingeltonTimer = null, klingeltonAktiv = false;
+function klingeltonStarten() {
+  const k = $("#klingeltonAudio");
+  klingeltonAktiv = true;
+  k.currentTime = 0;
+  k.play().catch(() => {});
+  clearTimeout(klingeltonTimer);
+  klingeltonTimer = setTimeout(klingeltonStoppen, KLINGELTON_MAX_MS);
+}
+function klingeltonStoppen() {
+  const k = $("#klingeltonAudio");
+  klingeltonAktiv = false;
+  clearTimeout(klingeltonTimer);
+  k.pause();
+  k.currentTime = 0;
+}
+document.addEventListener("visibilitychange", () => {
+  const k = $("#klingeltonAudio");
+  if (document.hidden) k.pause();
+  else if (klingeltonAktiv) k.play().catch(() => {});
+});
+
+// mitTon = false: Anrufscreen ohne Klingelton oeffnen (eingebettete Darstellung)
+function anrufOeffnen(mitTon = true) {
   $("#anrufscreen").hidden = false;
   $("#anrufscreen").classList.add("klingelt"); // pulsierender Ring um den Avatar, siehe CSS
   $("#anrufKlingelt").hidden = false;
   $("#anrufVerbunden").hidden = true;
   $("#anrufAblehnenHinweis").hidden = true;
-  const klingelton = $("#klingeltonAudio");
-  klingelton.currentTime = 0;
-  klingelton.play().catch(() => {});
+  if (mitTon) klingeltonStarten();
 }
 
 $("#anrufAblehnen").addEventListener("click", () => {
@@ -1176,9 +1204,7 @@ $("#anrufAnnehmen").addEventListener("click", () => {
   $("#anrufscreen").classList.remove("klingelt");
   $("#anrufKlingelt").hidden = true;
   $("#anrufVerbunden").hidden = false;
-  const klingelton = $("#klingeltonAudio");
-  klingelton.pause();
-  klingelton.currentTime = 0;
+  klingeltonStoppen();
   $("#anrufStatus").textContent = "Verbunden";
   $("#anrufUntertitel").textContent = "";
   $("#anrufPause").textContent = "⏸ Pause";
@@ -2250,9 +2276,7 @@ function devAufraeumen() {
   // Annehmen zu klicken) im Hintergrund einfach weiter, weil nur der
   // Annehmen-Handler ihn stoppte. Jetzt stoppt jeder Dev-Sprung ihn zuerst.
   // Siehe TODO.md.
-  const klingelton = $("#klingeltonAudio");
-  klingelton.pause();
-  klingelton.currentTime = 0;
+  klingeltonStoppen();
 }
 
 const DEVMENU_ZIELE = {
@@ -2325,11 +2349,13 @@ $("#devmenuListe").addEventListener("click", e => {
 // ohne die 1,5s-Verzoegerung des regulaeren Einstiegs dazwischen. Der
 // eigenstaendige Demo-Link bleibt unveraendert. Steht bewusst ganz am
 // Skriptende, damit alle vorher benutzten Funktionen/Variablen schon
-// initialisiert sind.
+// initialisiert sind. Der Klingelton startet hier bewusst NICHT von allein
+// (anrufOeffnen(false)): In der App-Vorschau und in Seiten, die Audio ohne
+// Klick erlauben, klingelte es sonst bei jedem Neuladen einfach los.
 if (document.documentElement.classList.contains("eingebettet")) {
   $("#einstieg").hidden = true;
   setzeZustand("anruf");
-  anrufOeffnen();
+  anrufOeffnen(false);
 }
 </script>
 </body>
